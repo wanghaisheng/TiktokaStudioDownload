@@ -1,0 +1,17 @@
+language: python
+python:
+  - "3.9"
+install:
+  - pip install -r requirements.txt
+  - python -m playwright install firefox
+script:
+  - pytest -v test.py
+
+# Definir o Deploy no Heroku
+deploy:
+  provider: heroku
+  api_key: ${{ secrets.HEROKU_APP_KEY }}
+  edge: true 
+  app: tiktokdownloadapi
+  on:
+      branch: main
