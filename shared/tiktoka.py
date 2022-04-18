@@ -1111,6 +1111,28 @@ def show_msg_newuser():
 video_tutorial_HEADING = r"""
 <h2 align="center"><strong>Watch basic tutorials</strong></h1>
 """
+
+videojs=r"""
+<link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.10.2/video-js.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.10.2/video.min.js"></script>
+
+"""
+
+mediaelement="""
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/5.0.5/mediaelement.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/5.0.5/mediaelement-and-player.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/5.0.5/mediaelementplayer.min.css" rel="stylesheet">
+$('video, audio').mediaelementplayer({
+	// Do not forget to put a final slash (/)
+	pluginPath: 'https://cdnjs.cloudflare.com/ajax/libs/mediaelement/5.0.5/',
+	// this will allow the CDN to use Flash without restrictions
+	// (by default, this is set as `sameDomain`)
+	shimScriptAccess: 'always'
+	// more configuration
+});
+"""
+
+
 def changelanguage(lang):
     session.run_js("window.open('/"+lang+"')")
     # session.run_js("location.href='/'"+lang)
@@ -1179,6 +1201,8 @@ def tiktoka(lang=''):
 # $('footer').append('<a href="https://ninja.tiktokvideos.download/" >  Tiktoka Ninja  </a>')
 # Footer
 # ^^^^^^
+    # session.run_js(mediaelement)
+    put_html(videojs)
 
     session.run_js(FOOTER
                    )
@@ -1243,29 +1267,34 @@ def tiktoka(lang=''):
         ], open=False)
         put_html("<br>")
         put_html(video_tutorial_HEADING)
-        multilink='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/oneinall.mp4'
-        downloaduservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/downloaduservideo.mp4'
-        searchuservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/douyinusersearch.mp4'
-        put_table([
-            [put_text('一次下载多个视频'),
-            #  put_image('https://www.python.org/static/img/python-logo.png'),
-            put_html('<video controls="controls" src="{url}"></video>'.format(url=multilink))             
-             
-             ],
-            [put_text('下载某个用户所有视频'),
-            #  put_image('https://www.python.org/static/img/python-logo.png'),
-            #  put_image('https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/donwload%20user%20video.png'),
-            put_html('<video controls="controls" src="{url}"></video>'.format(url=downloaduservideo))             
-             ],
-            [put_text('搜索某个用户并下载所有视频'),
-            #  put_image('https://www.python.org/static/img/python-logo.png'),
-            #  put_image('https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/donwload%20user%20video.png'),
-            put_html('<video controls="controls" src="{url}"></video>'.format(url=searchuservideo))             
-             ]
+        multilink='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownload/Screenshots/oneinall.mp4'
 
+        downloaduservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownload/Screenshots/downloaduservideo.mp4'
+        searchuservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownload/Screenshots/douyinusersearch.mp4'
 
+        
+        if session.info.user_agent.is_mobile:
+            put_column([put_text('一次下载多个视频'),
+                put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
+                ])
+            put_column([put_text('下载某个用户所有视频'),
+                put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+                            ])
 
-        ])
+            put_column([put_text('搜索某个用户并下载所有视频'),
+                put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
+                ])        
+        else:
+            put_column([put_text('一次下载多个视频'),
+                put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
+                ])
+            put_column([put_text('下载某个用户所有视频'),
+                put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+                            ])
+
+            put_column([put_text('搜索某个用户并下载所有视频'),
+                put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
+                ])
 
         put_html("<br>")
         put_html("<br>")
