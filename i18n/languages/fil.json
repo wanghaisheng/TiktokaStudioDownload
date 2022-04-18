@@ -15,7 +15,9 @@
    "support":"support",
    "timecost":"Time! cost: ",
    "quickdownload":"one click save all ",
-
+   "oneinall_hint":"bulk download video",
+   "oneinalluser_hint":"download user profile`s videos",
+   "oneinallsearchuser_hint":"search user and download user videos",   
    "returnhome":"Home",
    "doc":"documentation",
    "uservideo":"all videos one user have published",

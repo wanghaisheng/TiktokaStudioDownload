@@ -1267,32 +1267,36 @@ def tiktoka(lang=''):
         ], open=False)
         put_html("<br>")
         put_html(video_tutorial_HEADING)
-        multilink='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownload/Screenshots/oneinall.mp4'
+        multilink='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/oneinall.mp4'
 
-        downloaduservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownload/Screenshots/downloaduservideo.mp4'
-        searchuservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownload/Screenshots/douyinusersearch.mp4'
+        downloaduservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/downloaduservideo.mp4'
+        searchuservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/douyinusersearch.mp4'
 
         
         if session.info.user_agent.is_mobile:
-            put_column([put_text('一次下载多个视频'),
-                put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
-                ])
-            put_column([put_text('下载某个用户所有视频'),
-                put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
-                            ])
+            put_markdown('**{}**'.format(display_label['oneinall_hint'])),
+            put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
+            put_html("<br>")            
+            put_html("<br>")
+            put_markdown('**{}**'.format(display_label['oneinalluser_hint'])),
+            put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+            put_html("<br>")
+            put_html("<br>")
 
-            put_column([put_text('搜索某个用户并下载所有视频'),
-                put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
-                ])        
+            put_markdown('**{}**'.format(display_label['oneinallsearchuser_hint'])),
+            put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
         else:
-            put_column([put_text('一次下载多个视频'),
+            put_row([put_markdown('**一次下载多个视频**'),
                 put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
                 ])
-            put_column([put_text('下载某个用户所有视频'),
+            put_html("<br>")
+
+            put_row([put_markdown('**下载某个用户所有视频**'),
                 put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
                             ])
+            put_html("<br>")
 
-            put_column([put_text('搜索某个用户并下载所有视频'),
+            put_row([put_markdown('**搜索某个用户并下载所有视频**'),
                 put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
                 ])
 
@@ -1315,12 +1319,12 @@ def tiktoka(lang=''):
 
                 put_row([
                  None,
-                    put_button("start your jouney", onclick=partial(downloadview, display_label),
+                    put_button("start your Tiktoka journey", onclick=partial(downloadview, display_label),
                                color='primary', outline=False)
                 
                     ,None
 
-                ],size='25% 50% 25%')
+                ],size='65% 15% 20%')
 
             else:
                 put_row([

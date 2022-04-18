@@ -13,7 +13,9 @@
    "log":"log",
    "about":"about",
    "quickdownload":"one click save all ",
-
+   "oneinall_hint":"bulk download video",
+   "oneinalluser_hint":"download user profile`s videos",
+   "oneinallsearchuser_hint":"search user and download user videos",   
    "support":"support",
    "timecost":"¡Hora! costo: ",
    "returnhome":"Página principal",
