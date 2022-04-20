@@ -225,15 +225,6 @@ def error_do(e, func_name, input_value=''):
                 '\n' + "Input value: " + input_value + '\n')
 
 
-def loading():
-    # 写一个进度条装装样子吧 :)
-    set_scope('bar', position=3)
-    with use_scope('bar'):
-        put_processbar('bar')
-        for i in range(1, 4):
-            set_processbar('bar', i / 3)
-            time.sleep(0.1)
-
 
 def loadingbar(id, init=0, label=''):
     # 写一个进度条装装样子吧 :)

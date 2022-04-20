@@ -34,3 +34,6 @@ cachetools
 psycopg2-binary 
 pytz
 webdriver_manager
+fastapi-cloudauth
+python-firebase
+firebase-admin
