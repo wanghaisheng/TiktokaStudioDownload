@@ -1,17 +1,5 @@
-
-
-import json
-from site import execusercustomize
-import sys
-import requests
-from bs4 import BeautifulSoup
-import re
-import os
-from functools import partial
-from selenium import webdriver
 import time
-from .util import url_ok
-import platform
+from util import url_ok
 from playwright.sync_api import sync_playwright,Mouse
 
 # from .util import *
@@ -102,10 +90,8 @@ def scroll(page,pausetime):
             prev_height = curr_height
             time.sleep(pausetime)
 
-def get_user_video_list_tiktok_pl(url):
-    # /html/body/div[2]/div[2]/div[2]/div/div[2]/div[2]/div/div[98]/div[1]/div/div
-    pass
-def get_user_video_list_douyin_pl(url):
+
+def get_user_video_list_douyin_pl(url,increment=0):
     with sync_playwright() as p:
         start = time.time()
         print('user home url',url)
@@ -115,18 +101,25 @@ def get_user_video_list_douyin_pl(url):
         page.wait_for_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span", timeout=5000)  # 等待元素出现
         count = page.query_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span").text_content()
         print('video count',count)
+        # query db for existing count
+        
         # douyin 一屏只有16个视频
         if int(count)<16:
             pausetime=0
         else:
             pausetime=((int(count)/48)+1)*0.5
-        scrolltimes=int(int(count)/16)+1
-        # for i in range(0,scrolltimes):
-            # page.mouse.wheel(0,page.viewport_size['height'])
-            # page.evaluate("for (let i = 0; i < document.body.scrollHeight; i += 100) { window.scrollTo(0, i);}" )
-            # time.sleep(pausetime*0.3)
-            # page.locator('#root > div > div.T_foQflM > div > footer > div > div.uy0xcb2o > div:nth-child(6)').scroll_into_view_if_needed()
-        scroll(page,pausetime)
+        if increment:
+            scrolltimes=int(int(increment)/16)
+            if scrolltimes==0:
+                pass
+            else:
+                for i in range(0,scrolltimes):
+                    page.mouse.wheel(0,page.viewport_size['height'])
+                    page.evaluate("for (let i = 0; i < document.body.scrollHeight; i += 100) { window.scrollTo(0, i);}" )
+                    time.sleep(pausetime*0.3)
+                    page.locator('#root > div > div.T_foQflM > div > footer > div > div.uy0xcb2o > div:nth-child(6)').scroll_into_view_if_needed()
+        else:
+            scroll(page,pausetime)
         # scroll_to_bottom_of_page('',page,pausetime)
 
         video_ids_list = [
@@ -152,5 +145,5 @@ def get_user_video_list_douyin_pl(url):
 
 # get_user_video_list_douyin(url)
 url='https://www.douyin.com/user/MS4wLjABAAAAUpIowEL3ygUAahQB47vy8sbYMB1eIr40qtlDwxhxFGw'
-# print(get_user_video_list_douyin_pl(url))
+print(get_user_video_list_douyin_pl(url))
 

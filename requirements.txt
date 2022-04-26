@@ -19,7 +19,6 @@ gunicorn
 pyscreenshot
 lazyEdge
 requests
-playwright
 selenium_stealth
 selenium
 pillow
@@ -37,3 +36,7 @@ webdriver_manager
 fastapi-cloudauth
 python-firebase
 firebase-admin
+supabase==0.5.3
+playwright==1.18.1
+python-dotenv
+tenacity==8.0.1

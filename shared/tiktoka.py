@@ -1546,7 +1546,7 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                         print('this is a exsiting user', secuid)
                         urls = users[secuid]
                     else:
-                        # 冷热缓存 将airtable作为冷存储
+                        # 冷热缓存 将supabase  firebase作为冷存储
                         toast('This is a new user not in our database. may need longer time to process',
                                 position='right', color='#2188ff', duration=5, onclick=show_msg_newuser)
                         loadingbar(id='nuser', init=0.3,

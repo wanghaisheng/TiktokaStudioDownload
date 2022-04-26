@@ -1,5 +1,35 @@
 import os
 import ffmpeg
+import tarfile
+import time
+
+
+def compress_file(tar_file, target_file):
+    # tar_file是输出压缩包名字以及目录("./output/mp4.tar")，target_file是要打包的目录或文件名("./files")
+    if os.path.isfile(target_file):
+        with tarfile.open(tar_file, 'w') as tar:
+            tar.add(target_file)
+            return 'finished'
+    else:
+        with tarfile.open(tar_file, 'w') as tar:
+            for root, dirs, files in os.walk(target_file):
+                for single_file in files:
+                    filepath = os.path.join(root, single_file)
+                    tar.add(filepath)
+            return 'finished'
+
+def clean_file(path):
+    # 清理下载文件夹
+    while True:
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+                # print("%s文件删除成功 %s" % (name, (time.strftime("%d/%m/%Y%H:%M:%S"))))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+                # print("%s子文件夹下文件删除成功 %s" % (name, (time.strftime("%d/%m/%Y%H:%M:%S"))))
+        # 每30分钟(1800秒)清理一次
+        time.sleep(1800)
 
 def compress_video(video_full_path, size_upper_bound, two_pass=True, filename_suffix='1'):
     """

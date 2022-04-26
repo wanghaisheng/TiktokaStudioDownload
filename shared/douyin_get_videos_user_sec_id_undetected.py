@@ -12,7 +12,7 @@ from selenium import webdriver
 import platform
 import requests
 import time
-from .util import get_undetected_webdriver
+from util import get_undetected_webdriver
 import undetected_chromedriver as uc
 import os
 import cv2 as cv
@@ -51,9 +51,20 @@ def scroll_to_bottom_of_page(web_driver,pausetime):
         # and it breaks out of the loop
         time.sleep(pausetime)
         scroll_height = web_driver.execute_script(get_scroll_height_command)
+def scroll_to_bottom_of_page_comment(web_driver):
 
-def scroll_infi(driver):
-    SCROLL_PAUSE_TIME = 0.5
+    SCROLL_PAUSE_TIME = 2
+    CYCLES = 7
+    html = web_driver.find_element_by_tag_name('html')
+    html.send_keys(Keys.PAGE_DOWN)   
+    html.send_keys(Keys.PAGE_DOWN)   
+    time.sleep(SCROLL_PAUSE_TIME * 3)
+    for i in range(CYCLES):
+        html.send_keys(Keys.END)
+        time.sleep(SCROLL_PAUSE_TIME)
+def scroll_infi(driver,SCROLL_PAUSE_TIME):
+    if SCROLL_PAUSE_TIME =='':
+        SCROLL_PAUSE_TIME = 0.5
     while True:
 
         # Get scroll height
@@ -88,9 +99,7 @@ def scroll_infi(driver):
             else:
                 last_height = new_height
                 continue
-def get_user_video_list_tiktok(url):
-    # /html/body/div[2]/div[2]/div[2]/div/div[2]/div[2]/div/div[98]/div[1]/div/div
-    pass
+
 def get_track(distance):
     track = []
     current = 0
@@ -119,14 +128,13 @@ def move_slider(web_driver, slider, track):
     time.sleep(0.5)
     ActionChains(web_driver).release().perform()
 
-
-def get_user_video_list_douyin_undetected(url):
+def get_user_video_count_douyin_undetected(url):
     print('====initiliaze webdriver=====')
 
     # web_driver = getwebdriver_chrome()
     # print('url getting',web_driver.title(url),web_driver.get(url))
     # out = web_driver.get(url)
-    web_driver=get_undetected_webdriver()
+    web_driver=get_undetected_webdriver(False)
 
     out =web_driver.get(url)        
     wait = WebDriverWait(web_driver, 1)
@@ -192,20 +200,112 @@ def get_user_video_list_douyin_undetected(url):
         print('no slide at all ')        
     wait.until(EC.visibility_of_element_located(
         (By.CSS_SELECTOR, "div.CANY1MjK.GKO_f9Vh > span")))
-    count=web_driver.find_elements(By.CSS_SELECTOR,"div.CANY1MjK.GKO_f9Vh > span")[0].text
-    print('video count',)
+    # count = page.query_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span").text_content()
+
+    count=web_driver.find_elements(By.CSS_SELECTOR,"div.CANY1MjK:nth-child(1) > span:nth-child(1)")[0].text
+    print('video count',count)
+    return count
+
+def get_user_video_list_douyin_undetected(url):
+    print('====initiliaze webdriver=====')
+
+    # web_driver = getwebdriver_chrome()
+    # print('url getting',web_driver.title(url),web_driver.get(url))
+    # out = web_driver.get(url)
+    web_driver=get_undetected_webdriver(False)
+
+    out =web_driver.get(url)        
+    wait = WebDriverWait(web_driver, 1)
+    try:
+        web_driver.find_element(By.CSS_SELECTOR, "img[class^='captcha_verify_img_slide']")
+
+        piece_url = wait.until(EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "img[class^='captcha_verify_img_slide react-draggabl']"))).get_attribute('src')
+        code_path = "./image/code.png"  # 验证码背景图
+        if not os.path.exists("./image"):
+            os.makedirs("./image")           
+        web_driver.save_screenshot(code_path)
+
+        back_url = wait.until(EC.element_to_be_clickable(
+            (By.ID, "captcha-verify-image"))).get_attribute('src')
+        print('Back URL has been fetched')
+
+        slider = wait.until(EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "div[class^='secsdk-captcha-drag-icon']")))
+        print('Slider has been detected')
+        img = cv.imread(code_path)
+        card_img=img            
+        img_blur = cv.GaussianBlur(card_img, (7, 7), 1)
+        img = cv.medianBlur(img,5)
+        img_gray = cv.cvtColor(img_blur, cv.COLOR_BGR2GRAY)
+        ret2,thresh = cv.threshold(img_gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+        img_canny = cv.Canny(thresh, 50, 190)
+        
+        kernel = np.ones((3))
+        # erosion = cv.erode(img_canny, kernel, iterations=1)            
+        img_dilated = cv.dilate(img_canny, kernel, iterations=1)
+        # cv.imshow('img_dilated', img_dilated)
+        # cv.waitKey(0)
+        contours, hierarchy = cv.findContours(img_dilated,
+                                                cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+        e2 = []
+        offsetlist = []
+        # for contour in contours:
+
+        for i,cnt in enumerate(contours):
+                # if the contour has no other contours inside of it
+            if hierarchy[0][i][2] == -1 :
+                        # if the size of the contour is greater than a threshold
+                # if  cv.contourArea(cnt) > 10000:
+                x, y, w, h = cv.boundingRect(cnt)
+                print(x,y,w,h)
+                if cnt.size > 300 and w > 40 and h > 40 and x-slider['x'] > 60:  # TUNE
+                    offsetlist.append(x)
+                    e2.append(cnt)
+        print(offsetlist,'======!')
+        final =cv.drawContours(card_img, e2, -1, (0, 255, 0), 3)
+
+        offsetlist=sorted(list(set(offsetlist)))
+        for distance in offsetlist:
+            print('Distance has been calculated')
+
+            track = get_track(distance)
+            print('Track has been planned')
+
+            move_slider(slider, track)
+            print('Captcha has been solved')
+    except:
+        print('no slide at all ')        
+    wait.until(EC.visibility_of_element_located(
+        (By.CSS_SELECTOR, "div.CANY1MjK.GKO_f9Vh > span")))
+    # count = page.query_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span").text_content()
+
+    count=web_driver.find_elements(By.CSS_SELECTOR,"div.CANY1MjK:nth-child(1) > span:nth-child(1)")[0].text
+    print('video count',count)
     # douyin 一屏只有16个视频
     if int(count)<16:
-        pass
+        pausetime=0.5
     else:
         pausetime=(int(count)/48+1)*0.5
-        scroll_to_bottom_of_page(web_driver,pausetime)
-    # scroll_infi(web_driver)
+        # scroll_to_bottom_of_page(web_driver,pausetime)
+    scroll_infi(web_driver,pausetime)
+    # print(len(video_ids_list))
     video_ids_list = [
     video_element.get_attribute("href") + "\n"
     # "//*[@class='ARNw21RN']/li"
-    for video_element in web_driver.find_elements_by_xpath(
-        "//*[@class='ECMy_Zdt']/a"
-    )]
-    # print(len(video_ids_list))
+    for video_element in web_driver.find_elements(by=By.XPATH, value= "//*[@class='ECMy_Zdt']/a") ]
+    print(len(video_ids_list))
+    if abs(int(count)-len(video_ids_list))>5:
+        scroll_infi(web_driver,pausetime)
+
+        video_ids_list = [
+    video_element.get_attribute("href") + "\n"
+    # "//*[@class='ARNw21RN']/li"
+    for video_element in web_driver.find_elements(by=By.XPATH, value= "//*[@class='ECMy_Zdt']/a") ]
+
+
+
     return video_ids_list
+url='https://www.douyin.com/user/MS4wLjABAAAAUpIowEL3ygUAahQB47vy8sbYMB1eIr40qtlDwxhxFGw'
+
+get_user_video_list_douyin_undetected(url)
