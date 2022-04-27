@@ -7,6 +7,7 @@ from shared.feedback import feedback
 from shared.privacy import privacy
 from shared.terms import terms
 from shared.tiktoka import *
+from pywebio import start_server
 from flask import Flask
 import os
 app = Flask(__name__)

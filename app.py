@@ -6,6 +6,9 @@ from shared.feedback import feedback
 from shared.privacy import privacy
 from shared.terms import terms
 from flask import Flask
+from pywebio import start_server
+
+
 import os
 app = Flask(__name__)
 
@@ -51,4 +54,7 @@ if __name__ == "__main__":
     else:
         port = 5001
 
-    app.run(host='0.0.0.0', port=port)
+    
+
+    app.run(host='0.0.0.0',  port=port)
+    # ？start_server(app,static_dir='Screenshots/',port=port)

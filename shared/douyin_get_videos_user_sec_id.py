@@ -1,6 +1,6 @@
 import time
-from util import url_ok
-from playwright.sync_api import sync_playwright,Mouse
+from .util import url_ok
+from playwright.async_api import async_playwright,Mouse
 
 # from .util import *
 def get_playright(playwright,url,headless:bool=True):
@@ -92,7 +92,7 @@ def scroll(page,pausetime):
 
 
 def get_user_video_list_douyin_pl(url,increment=0):
-    with sync_playwright() as p:
+    with async_playwright() as p:
         start = time.time()
         print('user home url',url)
         page,res = get_playright(p,url,True)
@@ -144,6 +144,6 @@ def get_user_video_list_douyin_pl(url,increment=0):
 
 
 # get_user_video_list_douyin(url)
-url='https://www.douyin.com/user/MS4wLjABAAAAUpIowEL3ygUAahQB47vy8sbYMB1eIr40qtlDwxhxFGw'
-print(get_user_video_list_douyin_pl(url))
+# url='https://www.douyin.com/user/MS4wLjABAAAAUpIowEL3ygUAahQB47vy8sbYMB1eIr40qtlDwxhxFGw'
+# print(get_user_video_list_douyin_pl(url))
 

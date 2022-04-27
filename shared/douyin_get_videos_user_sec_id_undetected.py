@@ -12,7 +12,7 @@ from selenium import webdriver
 import platform
 import requests
 import time
-from util import get_undetected_webdriver
+from .util import get_undetected_webdriver
 import undetected_chromedriver as uc
 import os
 import cv2 as cv
@@ -299,13 +299,13 @@ def get_user_video_list_douyin_undetected(url):
         scroll_infi(web_driver,pausetime)
 
         video_ids_list = [
-    video_element.get_attribute("href") + "\n"
+        video_element.get_attribute("href").split('/')[-1]
     # "//*[@class='ARNw21RN']/li"
     for video_element in web_driver.find_elements(by=By.XPATH, value= "//*[@class='ECMy_Zdt']/a") ]
 
 
 
     return video_ids_list
-url='https://www.douyin.com/user/MS4wLjABAAAAUpIowEL3ygUAahQB47vy8sbYMB1eIr40qtlDwxhxFGw'
+# url='https://www.douyin.com/user/MS4wLjABAAAAUpIowEL3ygUAahQB47vy8sbYMB1eIr40qtlDwxhxFGw'
 
-get_user_video_list_douyin_undetected(url)
+# get_user_video_list_douyin_undetected(url)

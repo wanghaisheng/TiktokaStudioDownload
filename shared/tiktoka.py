@@ -4,21 +4,22 @@
 # @Update: 2022/03/17
 from functools import partial
 from pywebio import config, session
+import tarfile
 from pywebio.input import *
 from pywebio.output import *
 from pywebio.platform.flask import webio_view
 from retrying import retry
 from datetime import datetime
-from .tiktok_slidebreak_playwright import User_search_tiktok
 from .douyin_get_videos_user_sec_id_undetected import get_user_video_list_douyin_undetected
 from werkzeug.urls import url_quote
 from flask import Flask, request, jsonify, make_response
 from flask import url_for
 import re
+from .scraper import  *
+
 import json
 import platform
 import random
-import undetected_chromedriver as uc
 import time
 import pandas as pd
 import urllib
@@ -34,7 +35,7 @@ from plane import *
 from shared.utils.contents.index import *
 
 from .douyin_slidebreak_playwright import *
-from .douyin_get_videos_user_sec_id import get_user_video_list_douyin_pl, get_playright
+# from .douyin_get_videos_user_sec_id import get_user_video_list_douyin_pl, get_playright
 import pandas as pd
 from urllib.parse import urlparse, urlunsplit, urlsplit
 from playwright.sync_api import sync_playwright
@@ -351,156 +352,6 @@ def validate_uidhome(original_url):
         return False
 
 
-@retry(stop_max_attempt_number=3)
-def get_video_info(original_url, js='', key=''):
-
-    videotitle = ''
-    if js == '' or key == '':
-        # 利用官方接口解析链接信息
-        # print('getting video info', original_url)
-        key, videotitle = get_videoid_from_url(original_url)
-        api_url = f'https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={key}'
-
-        print("Sending request to: " + '\n' + api_url)
-        try:
-            print('choose request')
-            js = json.loads(requests.get(url=api_url, headers=headers).text)
-
-        except:
-            print('could not get result from request')
-        if len(js['item_list']) == 0:
-            print('try playwright')
-            with sync_playwright() as p:
-                page, res = get_playright(p, api_url)
-                js = res.json()
-        if len(js['item_list']) == 0:
-            return None
-    # 判断是否为图集
-    # print(js,'======')
-    api_url = f'https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={key}'
-
-    if js['item_list'][0]['images'] is not None:
-        print("Type = images")
-        image_data = js['item_list'][0]['images']
-        # 图集背景音频
-        image_music = str(js['item_list'][0]['music']
-                            ['play_url']['url_list'][0])
-        # 图集标题
-        image_title = str(js['item_list'][0]['desc'])
-        # 图集作者昵称
-        image_author = str(js['item_list'][0]['author']['nickname'])
-        # 图集作者抖音号
-        image_author_id = str(js['item_list'][0]['author']['unique_id'])
-        if image_author_id == "":
-            # 如果作者未修改过抖音号，应使用此值以避免无法获取其抖音ID
-            image_author_id = str(js['item_list'][0]['author']['short_id'])
-        # 去水印图集链接
-        images_url = []
-        for data in image_data:
-            images_url.append(data['url_list'][0])
-        image_info = [images_url, image_music, image_title,
-                      image_author, image_author_id, original_url]
-        return image_info, 'image', api_url
-    else:
-        print("Type = video")
-        # 去水印后视频链接(2022年1月1日抖音APi获取到的URL会进行跳转，需要在Location中获取直链)
-        video_url = str(js['item_list'][0]['video']['play_addr']
-                        ['url_list'][0]).replace('playwm', 'play')
-        r = requests.get(url=video_url, headers=headers,
-                         allow_redirects=False)
-        video_url = r.headers['Location']
-        print(video_url)
-        if 'http:' in video_url:
-            video_url = video_url.replace('http://', 'https://')
-        elif 'https:' in video_url:
-            pass
-        else:
-            video_url = 'https://'+video_url
-        # creat_time = time.strftime("%Y-%m-%d %H.%M.%S", time.localtime(js['item_list'][0]['create_time']))
-        # 视频背景音频
-        video_music = "None"
-        if 'music' in js['item_list'][0] and 'play_url' in js['item_list'][0]['music']:
-            if len(js['item_list'][0]['music']['play_url']['url_list']) > 0:
-                video_music = str(js['item_list'][0]['music']
-                                    ['play_url']['url_list'][0])
-                print(video_music)
-
-        print(video_music)
-        # 视频标题
-        video_title = str(js['item_list'][0]['desc'])
-        if video_title == '' and not videotitle == '':
-            video_title = videotitle
-        print(video_title)
-        # 视频作者昵称
-        video_author = str(js['item_list'][0]['author']['nickname'])
-        print(video_author)
-        # 视频作者抖音号
-        video_author_id = str(js['item_list'][0]['author']['unique_id'])
-        print(video_author_id)
-        if video_author_id == "":
-            # 如果作者未修改过抖音号，应使用此值以避免无法获取其抖音ID
-            video_author_id = str(js['item_list'][0]['author']['short_id'])
-        # 返回包含数据的列表
-        video_info = [video_url, video_music, video_title,
-                      video_author, video_author_id, original_url]
-        return video_info, 'video', api_url
-    # except Exception as e:
-    #     # 异常捕获
-    #     error_do(e, 'get_video_info', original_url)
-
-
-@retry(stop_max_attempt_number=3)
-def get_video_info_tiktok(tiktok_url):
-    # 对TikTok视频进行解析
-    tiktok_url = get_tiktok_url(tiktok_url)
-    print(tiktok_url)
-    try:
-        tiktok_headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            "authority": "www.tiktok.com",
-            "Accept-Encoding": "gzip, deflate",
-            "Connection": "keep-alive",
-            "Host": "www.tiktok.com",
-            "User-Agent": "Mozilla/5.0  (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) coc_coc_browser/86.0.170 Chrome/80.0.3987.170 Safari/537.36",
-        }
-        html = requests.get(url=tiktok_url, headers=tiktok_headers)
-        res = re.search(
-            '<script id="sigi-persisted-data">(.*)</script><script', html.text).group(1)
-        resp = re.findall(r'^window\[\'SIGI_STATE\']=(.*)?;window', res)[0]
-        result = json.loads(resp)
-        author_id = result["ItemList"]["video"]["list"][0]
-        video_info = result["ItemModule"][author_id]
-        # print("The author_id is: ", author_id)
-        # print(video_info)
-        # 从网页中获得的视频JSON 格式很乱 要忍一下
-        return video_info
-    except Exception as e:
-        # 异常捕获
-        error_do(e, 'get_video_info_tiktok', tiktok_url)
-
-
-@retry(stop_max_attempt_number=3)
-def tiktok_nwm(tiktok_url):
-    # 使用第三方API获取无水印视频链接（不保证稳定）
-    try:
-        tiktok_url = get_tiktok_url(tiktok_url)
-        s = requests.Session()
-        api_url = "https://ttdownloader.com/req/"
-        source = s.get("https://ttdownloader.com/")
-        token = re.findall(r'value=\"([0-9a-z]+)\"', source.text)
-        result = s.post(
-            api_url,
-            data={'url': tiktok_url, 'format': '', 'token': token[0]}
-        )
-        nwm, wm, audio = re.findall(
-            r'(https?://.*?.php\?v\=.*?)\"', result.text
-        )
-        r = requests.get(nwm, allow_redirects=False)
-        true_link = r.headers['Location']
-        return true_link
-    except Exception as e:
-        error_do(e, "tiktok_nwm", tiktok_url)
-
 
 @app.route("/api")
 def webapi():
@@ -559,6 +410,27 @@ def webapi():
         error_do(e, 'webapi', '')
         return jsonify(Message="解析失败", Reason=str(e), Result=False)
 
+def download_video_(video_url,file_name):
+
+    print('get download mp4 url', video_url)
+    video_mp4 = requests.get(video_url, headers).content
+    # Encapsulate the video byte stream into a response object
+    response = make_response(video_mp4)
+    # Add response header information
+    response.headers['Content-Type'] = "video/mp4"
+    # Fuck, it took my boss to solve the file Chinese name problem
+    try:
+        filename = file_name.encode('latin-1')
+    except UnicodeEncodeError:
+        filenames = {
+            'filename': unicodedata.normalize('NFKD', file_name).encode('latin-1', 'ignore'),
+            'filename*': "UTF-8''{}".format(url_quote(file_name) + '.mp4'),
+        }
+    else:
+        filenames = {'filename': file_name}
+    # attachment means to download as an attachment
+    response.headers.set('Content-Disposition', 'attachment', **filenames)
+    return response
 
 def download_video_url():
 
@@ -567,20 +439,35 @@ def download_video_url():
     print('input_url', input_url)
     video_url = input_url
     print('filenmae', file_name)
+    api = Scraper()    
     try:
         if 'douyinvod.com' in input_url and not file_name == '':
             pass
         elif 'v.douyin.com' in input_url or 'www.douyin.com' in input_url:
-            video_info, result_type, api_url = get_video_info(input_url)
-            video_url = video_info[0]
-            # Video title
-            video_title = video_info[2]
-            # Author's nickname
-            author_name = video_info[3]
+
+            result,resulttpye = api.douyin_videoinfo(input_url)
+            # 视频链接
+            video_url = result['nwm_video_url']
+            # 视频标题
+            video_title = result['video_title']
+            # 作者昵称
+            video_author = result['video_author']
+            # 清理文件名
+            file_name = clean_filename(video_title, video_author)
             # Clean up the file name
-            file_name = clean_filename(video_title, author_name)
         elif 'tiktok.com' in input_url:
-            download_url = find_url(tikmate().get_media(input_url)[1].json)[0]
+
+
+            result = api.tiktok_videoinfo(input_url)
+            # 无水印地址
+            video_url = result['nwm_video_url']
+            # 视频标题
+            video_title = result['video_title']
+            # 作者昵称
+            video_author = result['video_author']
+            # 清理文件名
+            file_name = clean_filename(video_title, video_author)
+
             return jsonify(Status='Success! Click to download!', No_WaterMark_Link=download_url)
         else:
             return jsonify(Status='Failed!', Reason='Check the link!')
@@ -593,7 +480,7 @@ def download_video_url():
         response.headers['Content-Type'] = "video/mp4"
         # Fuck, it took my boss to solve the file Chinese name problem
         try:
-            filename = file_name.encode('latin-1')
+            file_name = file_name.encode('latin-1')
         except UnicodeEncodeError:
             filenames = {
                 'filename': unicodedata.normalize('NFKD', file_name).encode('latin-1', 'ignore'),
@@ -667,76 +554,72 @@ def download_bgm_url():
         return jsonify(Status='Failed!', Reason='Check the link!')
 
 
-def put_result(item, label, idx, js, key):
+def put_result(video_info, label, idx, result_type):
     # 根据解析格式向前端输出表格
 
     # put_text('processing ', str(idx+1), 'video now ',position=-1)
 
-    video_info, result_type, api_url = get_video_info(item, js, key)
-    clientquickdownloadlist = []
     # bao cun dao kv value
-    # print('getting douyin result', video_info)
-    short_api_url = '/api?url=' + item
+    print('getting douyin result',video_info['original_url'],result_type)
+    short_api_url = '/api?url=' + video_info['original_url']
     result = {}
+    
     if result_type == 'video':
-        download_video = '/video?url=' + video_info[5]
+        download_video = '/video?url=' + video_info['original_url']
 
-        download_bgm = '/bgm?url=' + video_info[5]
+        download_bgm = '/bgm?url=' +video_info['original_url']
         # result['url']=video_info[0].replace('http://','https://')
-        result['url'] = video_info[5]
-        result['name'] = video_info[2]
-        if video_info[2] == '' or len(video_info[2]) < 2:
+        result['url'] = video_info['original_url']
+        result['name'] = video_info['video_title']
+        if video_info['video_title'] == '' or len(video_info['video_title']) < 2:
             result['downloadlink'] = download_video
         else:
             result['downloadlink'] = '/video?url=' + \
-                video_info[0]+'&name='+video_info[2]
-        clientquickdownloadlist.append(video_info[0])
-
-        put_collapse(str(idx+1)+' : '+video_info[2]+'-'+video_info[3]+'-video detail:',
+                video_info['nwm_video_url']+'&name='+video_info['video_title']
+        print('debg=============')
+        put_collapse(str(idx+1)+' : '+video_info['video_title']+'-'+video_info['video_author']+'-video detail:',
                      put_table([
                          [label['douyin_type'], label['douyin_content']],
                          [label['douyin_Format'], result_type],
                          [label['douyin_Video_raw_link'], put_link(
-                             label['douyin_Video_raw_link_hint'], video_info[0].replace('http://', 'https://'), new_window=True)],
+                             label['douyin_Video_raw_link_hint'], video_info['nwm_video_url'].replace('http://', 'https://'), new_window=True)],
                          [label['douyin_Video_download'], put_link(
                              label['douyin_Video_download_hint'], download_video, new_window=True)],
                          [label['douyin_Background_music_raw_link'], put_link(
-                             label['douyin_Background_music_raw_link_hint'], video_info[1], new_window=True)],
+                             label['douyin_Background_music_raw_link_hint'], video_info['video_music'], new_window=True)],
                          [label['douyin_Background_music_download'], put_link(
                              label['douyin_Background_music_download_hint'], download_bgm, new_window=True)],
-                         [label['douyin_Video_title'], video_info[2]],
-                         [label['douyin_Author_nickname'], video_info[3]],
-                         [label['douyin_Author_Douyin_ID'], video_info[4]],
+                         [label['douyin_Video_title'], video_info['video_title']],
+                         [label['douyin_Author_nickname'], video_info['video_author']],
+                         [label['douyin_Author_Douyin_ID'], video_info['video_author_id']],
                          [label['douyin_Original_video_link'], put_link(
-                             label['douyin_Original_video_link_hint'], video_info[5], new_window=True)],
+                             label['douyin_Original_video_link_hint'], video_info['original_url'], new_window=True)],
                          [label['douyin_Current_video_API_link'], put_link(
-                             label['douyin_Current_video_API_link_hint'], api_url, new_window=True)],
+                             label['douyin_Current_video_API_link_hint'], video_info['api_url'], new_window=True)],
                          [label['douyin_Current_video_streamline_API_link'], put_link(
                              label['douyin_Current_video_streamline_API_link_hint'], short_api_url, new_window=True)]
                      ]), open=False)
     else:
         download_bgm = '/bgm?url=' + video_info[5]
-        quickdownloadlist.append(download_bgm)
         put_collapse('bgm detail:',
                      put_table([
                          [label['douyin_type'], label['douyin_content']],
                          [label['douyin_Format'], result_type],
                          [label['douyin_Background_music_raw_link'], put_link(
-                             label['douyin_Background_music_raw_link_hint'], video_info[1], new_window=True)],
+                             label['douyin_Background_music_raw_link_hint'], video_info['album_music'], new_window=True)],
                          [label['douyin_Background_music_download'], put_link(
                              label['douyin_Background_music_download_hint'], download_bgm, new_window=True)],
-                         [label['douyin_Video_title'], video_info[2]],
-                         [label['douyin_Author_nickname'], video_info[3]],
-                         [label['douyin_Author_Douyin_ID'], video_info[4]],
+                         [label['douyin_Video_title'], video_info['album_title']],
+                         [label['douyin_Author_nickname'], video_info['album_author']],
+                         [label['douyin_Author_Douyin_ID'], video_info['album_author_id']],
                          [label['douyin_Original_video_link'], put_link(
-                             label['douyin_Original_video_link_hint'], video_info[5], new_window=True)],
+                             label['douyin_Original_video_link_hint'], video_info['original_url'], new_window=True)],
                          [label['douyin_Current_video_API_link'], put_link(
-                             label['douyin_Current_video_API_link_hint'], api_url, new_window=True)],
+                             label['douyin_Current_video_API_link_hint'], video_info['api_url'], new_window=True)],
                          [label['douyin_Current_video_streamline_API_link'], put_link(
                              label['douyin_Current_video_streamline_API_link_hint'], short_api_url, new_window=True)]
                      ]), open=False)
-        for i in video_info[0]:
-            quickdownloadlist.append(i)
+        for i in video_info['album_list']:
             put_collapse('picture detail:',
                          put_table([
                              [label['douyin_Picture_straight_link'], put_link(
@@ -761,38 +644,36 @@ def backup(sec_uid):
 
     return ''
 
+def put_tiktok_result(video_info, label, idx, result_type):
 
-def put_tiktok_result(item, label, idx):
     # 将TikTok结果显示在前端
     # put_text('processing ', str(idx+1), 'video now ',position=0)
-
-    video_info = get_video_info_tiktok(item)
-    nwm = tiktok_nwm(item, label)
-    download_url = '/video?url=' + item
-    api_url = '/api?url=' + item
+    print('getting tiktok result', video_info)
+    short_api_url = '/api?url=' + video_info['original_url']
+    result = {}
+    download_url = '/video?url=' + video_info['original_url']
+    api_url = '/api?url=' + video_info['original_url']
     put_table([
         [label['tiktok_type'], label['tiktok_content']],
-        [label['tiktok_Video_title'], video_info['desc']],
-        [label['tiktok_Video_direct_link_with_watermark'], put_link(label['tiktok_Video_direct_link_with_watermark_hint'], video_info['video']
-                                                                    ['playAddr'], new_window=True)],
+        [label['tiktok_Video_title'], video_info['video_title']],
+        [label['tiktok_Video_direct_link_with_watermark'], put_link(label['tiktok_Video_direct_link_with_watermark_hint'], video_info['wm_video_url'], new_window=True)],
         [label['tiktok_Video_direct_link_without_watermark'], put_link(
-            label['tiktok_Video_direct_link_without_watermark_hint'], nwm, new_window=True)],
+            label['tiktok_Video_direct_link_without_watermark_hint'], video_info['nwm_video_url'], new_window=True)],
         [label['tiktok_Video_direct_link_without_watermark'], put_link(
             label['tiktok_Video_direct_link_without_watermark_hint'], download_url, new_window=True)],
-        [label['tiktok_Background_music_raw_link'], video_info['music']['title'] +
-         " - " + video_info['music']['authorName']],
-        [label['tiktok_Background_music_raw_link'], put_link(label['tiktok_Background_music_raw_link_hint'], video_info['music']
-                                                             ['playUrl'], new_window=True)],
-        [label['tiktok_Author_nickname'], video_info['author']],
-        [label['tiktok_Author_user_ID'], video_info['authorId']],
-        [label['titkok_Follower_count'], video_info['authorStats']['followerCount']],
-        [label['tiktok_Following_count'], video_info['authorStats']['followingCount']],
-        [label['tiktok_Total_likes_get'], video_info['authorStats']['heart']],
-        [label['tiktok_videos_count'], video_info['authorStats']['videoCount']],
+        [label['tiktok_Background_music_raw_link'], video_info['video_music_title'] +
+         " - " + video_info['video_music_author']],
+        [label['tiktok_Background_music_raw_link'], put_link(label['tiktok_Background_music_raw_link_hint'], video_info['video_music_url'], new_window=True)],
+        [label['tiktok_Author_nickname'], video_info['video_author_nickname']],
+        [label['tiktok_Author_user_ID'], video_info['video_author_id']],
+        [label['titkok_Follower_count'], video_info['video_author_followerCount']],
+        [label['tiktok_Following_count'], video_info['video_author_followingCount']],
+        [label['tiktok_Total_likes_get'], video_info['video_author_heartCount']],
+        [label['tiktok_videos_count'], video_info['video_author_videoCount']],
         [label['tiktok_Original_video_link'], put_link(
-            label['tiktok_Original_video_link_hint'], item, new_window=True)],
+            label['tiktok_Original_video_link_hint'], video_info['original_url'], new_window=True)],
         [label['tiktok_Current_video_API_link'], put_link(
-            label['tiktok_Current_video_API_link_hint'], api_url, new_window=True)]
+            label['tiktok_Current_video_API_link_hint'], video_info['api_url'], new_window=True)]
     ])
 
 
@@ -813,6 +694,84 @@ def oneinalldownload_pop_window(html):
         print('1=========')
         # put_html(html)
         put_text('===========')
+
+
+def compress_file(tar_file, target_file):
+    # tar_file是输出压缩包名字以及目录("./output/mp4.tar")，target_file是要打包的目录或文件名("./files")
+    if os.path.isfile(target_file):
+        with tarfile.open(tar_file, 'w') as tar:
+            tar.add(target_file)
+            return 'finished'
+    else:
+        with tarfile.open(tar_file, 'w') as tar:
+            for root, dirs, files in os.walk(target_file):
+                for single_file in files:
+                    filepath = os.path.join(root, single_file)
+                    tar.add(filepath)
+            return 'finished'
+
+
+def video_download_window(result_dict):
+    try:
+        # result_dict = {'文件名': '链接'}
+        total_amount = len(result_dict)
+        download_time = (time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()))
+        # 存储根目录
+        save_path = './web/saved_videos/' + (download_time + '_total_' + str(total_amount) + '_videos')
+        # 判断目录是否存在
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        # 弹出窗口
+        with popup("正在服务器后台下载视频(共{}个下载任务)".format(str(len(result_dict)))):
+            # 下载索引计数
+            session.set_env(auto_scroll_bottom=True)
+
+            download_count = 0
+            # 遍历字典的键和值
+            for file_name, url in result_dict.items():
+                try:
+                    download_count += 1
+                    url=url.replace('/video?url=','')
+                    put_info('正在下载第{}个视频:\n{}'.format(download_count, file_name))
+                    print('url=====',url)
+                    response = requests.get(url, headers=headers)
+                    print('shipinxiazai',response.status_code)
+                    data = response.content
+                    if data:
+                        file_path = '{}/{}.{}'.format(save_path, file_name, 'mp4')
+                        if not os.path.exists(file_path):
+                            with open(file_path, 'wb') as f:
+                                f.write(data)
+                                f.close()
+                                put_success('{}下载成功'.format(file_name))
+                except Exception as e:
+                    download_count += 1
+                    put_error('视频下载失败，将跳过该视频。')
+                    continue
+            with use_scope('xiazaizhong'):
+                put_html('<hr>')
+
+                put_html('<h3>💾结果页视频合集准备中</h3>')
+                output_path = save_path + '/output'
+                tarfile_name = download_time + '_total_' + str(total_amount) + '_videos.tar'
+                output_file = output_path + '/' + tarfile_name
+
+                put_info('正在压缩视频文件，请勿关闭当前弹窗，完成后会在下方显示按钮...')
+                # 判断目录是否存在
+                if not os.path.exists(output_path):
+                    os.mkdir(output_path)
+                if download_count == total_amount:
+
+                    if compress_file(tar_file=output_file, target_file=save_path) == 'finished':
+                        clear('xiazaizhong')
+                        put_html('<h3>💾结果页视频合集下载完成</h3>')
+                        put_info('压缩视频已完成...')
+
+                        tar = open(output_file, "rb").read()
+                        put_file(tarfile_name, tar, '点击下载视频合集压缩包')
+    except Exception as e:
+        print(str(e))
+
 
 
 def api_document_pop_window():
@@ -986,7 +945,62 @@ gtag('config', 'G-484Z1BXPFZ');
 ldjson = """
 
 """
+quick3js = """
+<script>
+function makeid(length) {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * 
+charactersLength));
+}
+return result;
+}
+function download_files(%s) {
+function download_next(i) {
+    if (i >= files.length) {
+    return;
+    }
+    var a = document.createElement('a');
+    a.href = files[i]["downloadlink"];
+    a.target = '_parent';
+    //a.target = '_blank';
 
+    // Use a.download if available, it prevents plugins from opening.
+    if ('download' in a) {
+
+    strValue=files[i]["name"]
+    // Test whether strValue is empty
+    if (!strValue || strValue.trim() === "" || (strValue.trim()).length === 0) {
+        a.download = makeid(10)
+    }        
+    a.download = files[i]['name'];
+    }
+    // Add a to the doc for click to work.
+    (document.body || document.documentElement).appendChild(a);
+    if (a.click) {
+    a.click(); // The click method is supported by most browsers.
+    } else {
+    $(a).click(); // Backup using jquery
+    }
+    // Delete the temporary link.
+    a.parentNode.removeChild(a);
+    // Download the next file with a small timeout. The timeout is necessary
+    // for IE, which will otherwise only download the first file.
+    setTimeout(function() {
+    download_next(i + 1);
+    }, 500);
+}
+// Initiate the first download.
+download_next(0);
+}
+
+
+
+</script>
+
+"""
 
 quick3 = """
 <script>
@@ -1258,37 +1272,51 @@ def tiktoka(lang=''):
         ], open=False)
         put_html("<br>")
         put_html(video_tutorial_HEADING)
-        multilink='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/oneinall.mp4'
-
-        downloaduservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/downloaduservideo.mp4'
-        searchuservideo='https://cdn.jsdelivr.net/gh/wanghaisheng/TiktokaDownloader/Screenshots/douyinusersearch.mp4'
+        multilink='static/oneinall.mp4'
+        multilink_gif = open('./Screenshots/oneinall.gif', 'rb').read()  
+        downloaduservideo_gif = open('./Screenshots/downloaduservideo.gif', 'rb').read()  
+        searchuservideo_gif = open('./Screenshots/douyinusersearch.gif', 'rb').read()  
+        # print(multilink_gif)
+        downloaduservideo='static/downloaduservideo.mp4'
+        searchuservideo='https://raw.githubusercontent.com/wanghaisheng/TiktokaDownload/main/Screenshots/douyinusersearch.mp4?token=GHSAT0AAAAAABTWDUKZVF5EXKQVWYW2FF7SYTI6B4Q'
 
         
         if session.info.user_agent.is_mobile:
             put_markdown('**{}**'.format(display_label['oneinall_hint'])),
-            put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
+            put_image(multilink_gif)
+            # put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
             put_html("<br>")            
             put_html("<br>")
             put_markdown('**{}**'.format(display_label['oneinalluser_hint'])),
-            put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+            # put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+            put_image(downloaduservideo_gif)
+            
             put_html("<br>")
             put_html("<br>")
 
             put_markdown('**{}**'.format(display_label['oneinallsearchuser_hint'])),
-            put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
+            # put_html('<video class="videojs vjs-default-skin vjs-9-16" controls preload="auto" width="320" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
+            put_image(searchuservideo_gif)
+
         else:
             put_row([put_markdown('**一次下载多个视频**'),
-                put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
+                put_image(multilink_gif)
+
+                # put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=multilink))
                 ])
             put_html("<br>")
 
             put_row([put_markdown('**下载某个用户所有视频**'),
-                put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+                # put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" type="video/mp4" data-setup="{}" src={url} </video>'.format("{}",url=downloaduservideo))
+                put_image(downloaduservideo_gif)
+                            
                             ])
             put_html("<br>")
 
             put_row([put_markdown('**搜索某个用户并下载所有视频**'),
-                put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
+                # put_html('<video class="videojs vjs-default-skin vjs-16-9" controls preload="auto" width="640" poster="" data-setup="{}" src={url} </video>'.format("{}",url=searchuservideo))
+                put_image(searchuservideo_gif)
+                
                 ])
 
         put_html("<br>")
@@ -1331,7 +1359,7 @@ def tiktoka(lang=''):
             
                 ,None
 
-            ],size='25% 50% 25%')
+            ],size='35% 50% 15%')
 
         # downloadview(display_label)
 
@@ -1445,6 +1473,29 @@ def downloadview(display_label):
                         tiktokview(tiktok_url_list,display_label,userip,userip_call_count,session)
 
 def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
+    # if session.info.user_agent.is_pc:
+
+    #     put_markdown(
+    #         """<div align='center' ><font size='14'>%s</font></div>""" % display_label['title'])
+    #     put_markdown(
+    #         """<div align='center' ><font size='14'>%s</font></div>""" % display_label['sub_title'])
+    #     put_markdown(
+    #         """<div align='center' ><font size='12'>%s</font></div>""" % display_label["third_title"])
+    # elif session.info.user_agent.is_mobile:
+    #     put_markdown(
+    #         """<div align='center' ><font size='5'>%s</font></div>""" % display_label['title'])
+    #     put_markdown(
+    #         """<div align='center' ><font size='4'>%s</font></div>""" % display_label['sub_title'])
+    #     put_markdown(
+    #         """<div align='center' ><font size='4'>%s</font></div>""" % display_label["third_title"])
+    # elif session.info.user_agent.is_tablet:
+    #     put_markdown(
+    #         """<div align='center' ><font size='12'>%s</font></div>""" % display_label['title'])
+    #     put_markdown(
+    #         """<div align='center' ><font size='12'>%s</font></div>""" % display_label['sub_title'])
+    #     put_markdown(
+    #         """<div align='center' ><font size='10'>%s</font></div>""" % display_label["third_title"])
+    # put_html('<hr>')
     start = time.time()
     allquickdownloadlist = []
 
@@ -1452,6 +1503,7 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
 
         douyin_standlone_video_url_list = []
         douyin_user_video_url_list = []
+        scaper = Scraper()
 
         douyin_userhomelist = []
 
@@ -1461,35 +1513,13 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
             loadingbar(id='extractingurl', init=0.3,
                         label='extracting input urls')
             for idx, url in enumerate(douyin_url_list):
-
-                if 'v.douyin.com' in url:
-                    with sync_playwright() as p:
-
-                        page, res = get_playright(p, url)
-                        long_url = res.url
-                        print('===', long_url)
-                        if '?' in long_url:
-                            long_url = long_url.split('?')[0]
-                        if '/user' in long_url:
-                            douyin_userhomelist.append(long_url)
-                        elif '/video' in long_url:
-                            douyin_standlone_video_url_list.append(
-                                long_url)
-                elif 'www.douyin.com/video' in url:
-                    if '?' in url:
-                        url = url.split('?')[0]
-                    douyin_standlone_video_url_list.append(url)
-                elif 'www.douyin.com/user' in url:
-                    if '?' in url:
-                        url = url.split('?')[0]
-                    douyin_userhomelist.append(url)
-                elif 'www.iesdouyin.com/share/user' in url:
-                    userprefix = 'https://www.douyin.com/user/'
-                    # https://www.iesdouyin.com/share/user/MS4wLjABAAAAqzSH2QSxlt5qxYcTiSQ7Fqlho9lDUAaEZgIdgs4xl0E?with_sec_did=1&sec_uid=MS4wLjABAAAAqzSH2QSxlt5qxYcTiSQ7Fqlho9lDUAaEZgIdgs4xl0E&u_code=h6k5ffc9&did=MS4wLjABAAAAypaUWYLhajUUAlLsugFR6fwDjeKmAC0do3pCzmJckSo&iid=MS4wLjABAAAAMbQPjJHaOPuA5-EPckp4s49p8sAFL6YvWvQO1nIzKqaooAW91pQgsN1NAfkoEGhi&ecom_share_track_params=%7B%22is_ec_shopping%22:%221%22%7D&utm_campaign=client_share&app=aweme&utm_medium=ios&tt_from=copy&utm_source=copy
-                    secuid = url.split(
-                        '?')[0].split('share/user/')[-1]
-                    secuidhome = userprefix + secuid
-                    douyin_userhomelist.append(secuidhome)
+                videoidhome,secuidhome=scaper.douyin_url2videoid(url)
+                if not videoidhome=='':
+                    douyin_standlone_video_url_list.append(videoidhome)
+                else:
+                    if not secuidhome=='':
+                        douyin_userhomelist.append(secuidhome)
+                    
                 if len(douyin_url_list) == 1:
                     for i in range(1, 4):
                         set_processbar('extractingurl', i / 3)
@@ -1501,6 +1531,7 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
             clear('extractingurl')
             if len(douyin_standlone_video_url_list) > 0:
 
+                print(douyin_standlone_video_url_list)
                 msg = 'STEP 2 : analysing ' + \
                     str(len(douyin_standlone_video_url_list)) + \
                     ' videos from standlone links'
@@ -1510,15 +1541,17 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                             label='specific videos downloading')
                 for idx, long_url in enumerate(douyin_standlone_video_url_list):
 
-                    if '/user' in long_url:
-                        continue
                     videoid = long_url.split(
-                        'https://www.douyin.com/video/')[1]
-                    deleted, js, key = filter_deleted_videos(
-                        long_url, videoid)
-                    if deleted == False:
+                        'www.douyin.com/video/')[-1]
+                    # deleted, js, key = filter_deleted_videos(
+                        # long_url, videoid)
+                    # if deleted == False:
+                    videoinfo,resulttype=scaper.douyin_videoinfo(videoid)
+                    if videoinfo is None:
+                        put_text('this video is not supported yet',long_url)
+                    else:
                         result = put_result(
-                            url, display_label, idx, js, key)
+                                videoinfo, display_label, idx, resulttype)
                         allquickdownloadlist.append(result)
                     if len(douyin_standlone_video_url_list) == 1:
                         for i in range(1, 4):
@@ -1530,21 +1563,25 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
 
                 clear('svd')
             if len(douyin_userhomelist) > 0:
+                usersearch_douyin = User_search_douyin()
+
                 msg = 'start to extract user videos'
                 toast(msg, position='right',
                         color='#2188ff', duration=3)
                 loadingbar(id='alluser', init=0.3,
                             label='user videos downloading')
-                users = loadUser2dict(mode='douyin')
+                # users = loadUser2dict(mode='douyin')
                 # print('===', users)
                 for idx, item in enumerate(douyin_userhomelist):
 
                     secuid = item.split('/')[-1]
                     secuidhome = item
                     urls = []
-                    if not users == {} and secuid in users:
+                    user=supabaseuserquery('tiktoka_douyin_users',secuid)
+                    if len(user)>0:
                         print('this is a exsiting user', secuid)
-                        urls = users[secuid]
+                        videoids = user['video_ids']
+                        urls=['https://www.douyin.com/video/'+x for x in videoids]
                     else:
                         # 冷热缓存 将supabase  firebase作为冷存储
                         toast('This is a new user not in our database. may need longer time to process',
@@ -1552,16 +1589,20 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                         loadingbar(id='nuser', init=0.3,
                                     label='new user indexing')
                         try:
-                            urls = get_user_video_list_douyin_pl(
+
+                            videoids = usersearch_douyin.get_user_video_list_douyin_pl(
                                 secuidhome)
+                            usersearch_douyin.close()
                         except:
-                            urls = get_user_video_list_douyin_undetected(
+                            videoids = get_user_video_list_douyin_undetected(
                                 secuidhome)
-                        users[secuid] = urls
+                        urls=['https://www.douyin.com/video/'+x for x in videoids]
+
+                        supabaseuserupdate('tiktoka_douyin_users',{'video_ids':videoids},secuid)
                         set_processbar(
                             'nuser', (idx+1) / len(douyin_userhomelist))
                         time.sleep(0.1)
-                        addUser2dict(users)
+                        # addUser2dict(users)
                         # douyintable=newtable(os.environ['AIRTABLE_API_KEY'],
                         # os.environ['TIKTOKA_AIRTABLE_BASE_KEY'],
                         # os.environ['DOUYIN_AIRTABLE_TABLE_KEY']
@@ -1600,15 +1641,23 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                             label='all user videos downloading')
                 for idx, long_url in enumerate(douyin_user_video_url_list):
 
-                    if '/user' in long_url:
-                        continue
+                    # if '/user' in long_url:
+                    #     continue
                     videoid = long_url.split(
                         'https://www.douyin.com/video/')[1]
-                    deleted, js, key = filter_deleted_videos(
-                        long_url, videoid)
-                    if deleted == False:
+                    # query videois in db to check exist and deleted
+                    # deleted, js, key = filter_deleted_videos(
+                    #     long_url, videoid)
+                    # if deleted == False:
+                    #     result = put_result(
+                    #         long_url, display_label, idx, js, key)
+                    #     allquickdownloadlist.append(result)
+                    videoinfo,resulttype=scaper.douyin_videoinfo(videoid)
+                    if videoinfo is None:
+                        put_text('this video is not supported yet',long_url)
+                    else:
                         result = put_result(
-                            long_url, display_label, idx, js, key)
+                                videoinfo, display_label, idx, resulttype)
                         allquickdownloadlist.append(result)
                     msg = 'removing watermark +1'
                     toast(msg, position='right',
@@ -1645,11 +1694,17 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
         end = time.time()
         put_text('Parsing is complete! time consuming: %.4fs' %
                     (end - start))
+    print(allquickdownloadlist,'-==================')
+    allquickdownloadlistdict={}
+    for i in allquickdownloadlist:
+        allquickdownloadlistdict[i['name']]=i['downloadlink']
     put_row([
     put_button("Try again", onclick=lambda: session.run_js(
         return_home), color='success', outline=False),
-    put_button(display_label['quickdownload'], onclick=lambda: session.run_js(
-        "download_files(%s);"%allquickdownloadlist), color='success', outline=False)])    
+    # put_button(display_label['quickdownload'], onclick=lambda: session.run_js(
+    #     quick3js%allquickdownloadlist), color='success', outline=False)
+                put_button("get tar/zip", onclick=lambda: video_download_window(allquickdownloadlistdict))        
+        ])    
 # session.run_js("download_files(%s);"%allquickdownloadlist)
 
 def tiktokview(tiktok_url_list,display_label,userip,userip_call_count):
@@ -1760,11 +1815,11 @@ def tiktokview(tiktok_url_list,display_label,userip,userip_call_count):
                         loadingbar(id='nuser', init=0.3,
                                     label='new user indexing')
                         try:
-                            urls = get_user_video_list_tiktok_pl(
+                            urls = scraper.get_user_video_list_tiktok_pl(
                                 secuidhome)
                         except:
-                            urls = get_user_video_list_tiktok_undetected(
-                                secuidhome)
+                            # urls = get_user_video_list_tiktok_undetected(secuidhome)
+                            pass
                         users[secuid] = urls
                         set_processbar(
                             'nuser', (idx+1) / len(tiktok_userhomelist))

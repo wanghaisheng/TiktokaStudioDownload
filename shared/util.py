@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from supabase import create_client, Client
 from dotenv import load_dotenv
 import logging
-from tenacity import *
+# from tenacity import *
 # 加载文件
 load_dotenv(".env")
 supabase_url = os.environ.get('supabase_url')
@@ -278,7 +278,7 @@ def updaterow(table,rows):
                 table.update(id,[row])      
 
 
-@retry(stop=stop_after_attempt(10))
+# @retry(stop=stop_after_attempt(10))
 def supabaseuserquery(tablename,sec_uid):
     if sec_uid=='' or sec_uid is None:
         data = supabase_db.table(tablename).select().execute()    
@@ -291,13 +291,13 @@ def supabaseuserquery(tablename,sec_uid):
             data.data=''
             raise Exception
     return data.data
-@retry(stop=stop_after_attempt(10))
+# @retry(stop=stop_after_attempt(10))
 def supabaseuseradd(tablename,users):
     try:
         data = supabase_db.table(tablename).insert(users).execute()    
     except:
         raise Exception
-@retry(stop=stop_after_attempt(10))
+# @retry(stop=stop_after_attempt(10))
 def supabaseuserupdate(tablename,user,uid):
     try:
         data = supabase_db.table(tablename).update(user).eq("uid", uid).execute()    

@@ -1,5 +1,10 @@
 from collections import UserString
 
+badcase
+
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6997703748135030020/
+
+
 
 https://v.douyin.com/JWTACSX/,
 https://v.douyin.com/J76dSXL/,
