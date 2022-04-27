@@ -139,4 +139,4 @@ chromedriver.exe
 douyinUsers.pickle
 tiktokUsers.pickle
 log.txt
-web/
+web/*
