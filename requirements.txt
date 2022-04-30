@@ -36,7 +36,7 @@ webdriver_manager
 fastapi-cloudauth
 python-firebase
 firebase-admin
-supabase==0.5.3
+supabase
 playwright==1.18.1
 python-dotenv
 tenacity==8.0.1
