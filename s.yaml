@@ -17,5 +17,5 @@ services:
         runtime: python3
         codeUri: ./
         handler: app.handler
-        memorySize: 3200
+        memorySize: 3072
         timeout: 6
