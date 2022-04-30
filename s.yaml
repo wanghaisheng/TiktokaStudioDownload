@@ -55,7 +55,7 @@ services:
         runtime: custom-container
         customContainerConfig:
           image: "{{ acrRegistry }}"
-        codeUri: ./code
+        codeUri: ./
       triggers:
         - name: httpTrigger
           type: http
