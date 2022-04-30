@@ -24,7 +24,7 @@ name: tiktoka-downloader-app
 vars: # global variables
   region: cn-hangzhou
   service:
-    name: tiktoka-downloader-service
+    name: "{{ serviceName }}"
     description: 'hello world by serverless devs'
 
 services:
