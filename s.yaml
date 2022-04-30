@@ -1,0 +1,21 @@
+edition: 1.0.0          #  命令行YAML规范版本，遵循语义化版本（Semantic Versioning）规范
+name: tiktokadownload       #  项目名称
+access: "default"       #  密钥别名
+
+services:
+  fc-deploy-test: #  服务名称
+    component: fc  # 组件名称
+    props: #  组件的属性值
+      region: cn-shanghai
+      service:
+        name: fctest
+        description: 'test'
+        internetAccess: true
+      function:
+        name: tiktokadownload
+        description: this is a emoji
+        runtime: python3
+        codeUri: ./
+        handler: app.handler
+        memorySize: 3780
+        timeout: 6
