@@ -1519,7 +1519,6 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                 else:
                     if not secuidhome=='':
                         douyin_userhomelist.append(secuidhome)
-                    
                 if len(douyin_url_list) == 1:
                     for i in range(1, 4):
                         set_processbar('extractingurl', i / 3)
@@ -1578,10 +1577,36 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                     secuidhome = item
                     urls = []
                     user=supabaseuserquery('tiktoka_douyin_users',secuid)
+                    print('-------',user)
                     if len(user)>0:
-                        print('this is a exsiting user', secuid)
-                        videoids = user['video_ids']
-                        urls=['https://www.douyin.com/video/'+x for x in videoids]
+                        # print('this is a exsiting user', secuid)
+                        videoids = user[0]['video_ids']
+                        videocount=user[0]['video_count']
+                        print('this is a exsiting user',user, secuid,type(videoids))
+
+                        if not videoids=='[]' and len(videoids)>0:
+                            urls=['https://www.douyin.com/video/'+x for x in videoids]
+                        else:
+                            if int(videocount)>0:
+                                put_text('this user is not index yet')
+                            else:
+                                try:
+
+                                    videoids = usersearch_douyin.get_user_video_list_douyin_pl(
+                                        secuidhome)
+                                    usersearch_douyin.close()
+                                except:
+                                    videoids = get_user_video_list_douyin_undetected(
+                                        secuidhome)
+                                
+                                if videoids==False:
+                                    put_text('there is no videos for this user\n',item)
+                                else:
+                                    urls=['https://www.douyin.com/video/'+x for x in videoids]
+
+                                    supabaseuserupdate('tiktoka_douyin_users',{'video_count':len(videoids),'video_ids':videoids},secuid)
+
+
                     else:
                         # 冷热缓存 将supabase  firebase作为冷存储
                         toast('This is a new user not in our database. may need longer time to process',
@@ -1596,9 +1621,13 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                         except:
                             videoids = get_user_video_list_douyin_undetected(
                                 secuidhome)
-                        urls=['https://www.douyin.com/video/'+x for x in videoids]
+                        
+                        if videoids==False:
+                            put_text('this user is deleted\n',secuidhome)
+                        else:
+                            urls=['https://www.douyin.com/video/'+x for x in videoids]
 
-                        supabaseuserupdate('tiktoka_douyin_users',{'video_ids':videoids},secuid)
+                            supabaseuserupdate('tiktoka_douyin_users',{'video_count':len(videoids),'video_ids':videoids},secuid)
                         set_processbar(
                             'nuser', (idx+1) / len(douyin_userhomelist))
                         time.sleep(0.1)
@@ -1677,9 +1706,10 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
                     (end - start))
 
         # put_html(quick3%(allquickdownloadlist,display_label['quickdownload']))
-
-        popup('Finished processing',
-                [put_html(quick3 % (allquickdownloadlist, display_label['quickdownload'])),
+        if len(allquickdownloadlist)>0:
+            popup('Finished processing',
+                [
+                put_html(quick3 % (allquickdownloadlist, display_label['quickdownload'])),
                 put_link('%s' % display_label['returnhome'], '/')
 
                 ],
@@ -1698,13 +1728,22 @@ def douyinview(douyin_url_list,display_label,userip,userip_call_count,session):
     allquickdownloadlistdict={}
     for i in allquickdownloadlist:
         allquickdownloadlistdict[i['name']]=i['downloadlink']
-    put_row([
+
+    if len(allquickdownloadlist)>0:
+
+        put_row([
     put_button("Try again", onclick=lambda: session.run_js(
-        return_home), color='success', outline=False),
-    # put_button(display_label['quickdownload'], onclick=lambda: session.run_js(
-    #     quick3js%allquickdownloadlist), color='success', outline=False)
-                put_button("get tar/zip", onclick=lambda: video_download_window(allquickdownloadlistdict))        
+        return_home), color='success', outline=False)
+        ,put_html(quick3 % (allquickdownloadlist, display_label['quickdownload']))
+
+        # ,        put_button("get tar/zip", onclick=lambda: video_download_window(allquickdownloadlistdict))        
         ])    
+    else:
+
+        put_row([
+    put_button("Try again", onclick=lambda: session.run_js(
+        return_home), color='success', outline=False)
+        ])         
 # session.run_js("download_files(%s);"%allquickdownloadlist)
 
 def tiktokview(tiktok_url_list,display_label,userip,userip_call_count):

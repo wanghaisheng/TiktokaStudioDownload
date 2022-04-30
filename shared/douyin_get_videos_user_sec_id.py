@@ -1,7 +1,8 @@
 import time
 from .util import url_ok
-from playwright.async_api import async_playwright,Mouse
-
+from playwright.sync_api import sync_playwright,Mouse
+import json
+import requests
 # from .util import *
 def get_playright(playwright,url,headless:bool=True):
     #     browser = p.chromium.launch()
@@ -89,17 +90,50 @@ def scroll(page,pausetime):
         else:
             prev_height = curr_height
             time.sleep(pausetime)
+def validate_uidhome(url):
+    with sync_playwright() as p:
+        print('user home url',url)
+        page,res = get_playright(p,url,True)
+        # print(res.text())
+        try:
+            t=page.locator('div.CANY1MjK:nth-child(1) > span:nth-child(1)')
+            # t.wait_for(timeout=10)
+            
+            if int(t.text_content())>0:
+                return True
+            else:
+                return False
+        except:
+            try:
+                t=page.locator('.P6wJrwQ6')
+                # t.wait_for(timeout=10)
 
-
-def get_user_video_list_douyin_pl(url,increment=0):
-    with async_playwright() as p:
+                if t.text_content()=='用户不存在':
+                    return False
+                else:
+                    return True
+            except:
+                return False
+def get_user_video_count_douyin_pl(url):
+    with sync_playwright() as p:
         start = time.time()
         print('user home url',url)
         page,res = get_playright(p,url,True)
         # page = browser.new_page()
         # page.goto(url)
-        page.wait_for_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span", timeout=5000)  # 等待元素出现
-        count = page.query_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span").text_content()
+        # page.wait_for_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span", timeout=5000)  # 等待元素出现
+        count = page.locator("div.CANY1MjK:nth-child(1) > span:nth-child(1)").text_content()
+        print('video count',count)
+    return int(count)
+def get_user_video_list_douyin_pl(url,increment=0):
+    with sync_playwright() as p:
+        start = time.time()
+        print('user home url',url)
+        page,res = get_playright(p,url,True)
+        # page = browser.new_page()
+        # page.goto(url)
+        # page.wait_for_selector("#root > div > div.T_foQflM > div > div > div.ckqOrial > div.mwbaK9mv > div.isaIlRLR > div.CANY1MjK.GKO_f9Vh > span", timeout=5000)  # 等待元素出现
+        count = page.locator("div.CANY1MjK:nth-child(1) > span:nth-child(1)").text_content()
         print('video count',count)
         # query db for existing count
         
@@ -123,7 +157,7 @@ def get_user_video_list_douyin_pl(url,increment=0):
         # scroll_to_bottom_of_page('',page,pausetime)
 
         video_ids_list = [
-        "https:"+video_element.get_attribute("href") + "\n"
+        video_element.get_attribute("href").split('/')[-1]
         # "//*[@class='ARNw21RN']/li"
         for video_element in page.query_selector_all(
             "//*[@class='ECMy_Zdt']/a"
@@ -132,15 +166,18 @@ def get_user_video_list_douyin_pl(url,increment=0):
         if abs(int(count)-len(video_ids_list))>5:
             scroll(page,pausetime)
             video_ids_list = [
-        "https:"+video_element.get_attribute("href") + "\n"
+        video_element.get_attribute("href").split('/')[-1]
         # "//*[@class='ARNw21RN']/li"
         for video_element in page.query_selector_all(
             "//*[@class='ECMy_Zdt']/a"
         )]
         end = time.time()
         print('%.4f秒' % (end - start))
-    return video_ids_list
+    return video_ids_list,int(count)
 
+headers = {
+            'user-agent': 'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.66'
+        }
 
 
 # get_user_video_list_douyin(url)

@@ -14,6 +14,7 @@ import requests
 from tenacity import *
 import time
 from .douyin_get_videos_user_sec_id import *
+from urllib.parse import urlparse, parse_qs
 
 class Scraper:
     """
@@ -58,7 +59,20 @@ class Scraper:
                     secuid=original_url.split('www.douyin.com/user/')[-1]
                 elif 'www.iesdouyin.com/share/user' in original_url:
                     # https://www.iesdouyin.com/share/user/MS4wLjABAAAAqzSH2QSxlt5qxYcTiSQ7Fqlho9lDUAaEZgIdgs4xl0E?with_sec_did=1&sec_uid=MS4wLjABAAAAqzSH2QSxlt5qxYcTiSQ7Fqlho9lDUAaEZgIdgs4xl0E&u_code=h6k5ffc9&did=MS4wLjABAAAAypaUWYLhajUUAlLsugFR6fwDjeKmAC0do3pCzmJckSo&iid=MS4wLjABAAAAMbQPjJHaOPuA5-EPckp4s49p8sAFL6YvWvQO1nIzKqaooAW91pQgsN1NAfkoEGhi&ecom_share_track_params=%7B%22is_ec_shopping%22:%221%22%7D&utm_campaign=client_share&app=aweme&utm_medium=ios&tt_from=copy&utm_source=copy
-                    secuid = original_url.split('share/user/')[-1]
+                    o = urlparse(original_url)
+
+                    query = parse_qs(o.query)
+                    # extract the URL without query parameters
+                    # print(query)
+
+                    if 'sec_uid' in query:
+                        secuid=query['sec_uid'][0]
+                    else:
+                        if '?' in original_url:
+                            original_url = original_url.split('?')[0]                            
+                        secuid = original_url.split('share/user/')[-1]
+
+
                 else:
                     print('this user url is not supported yet',original_url)
                 userprefix = 'https://www.douyin.com/user/'
@@ -77,7 +91,7 @@ class Scraper:
                 # 正则匹配出视频ID
 
                 if 'user' in long_url:
-                    print('is user link')
+                    print('is user link',long_url)
                     if '?' in original_url:
                         original_url = original_url.split('?')[0]                
                     if 'www.douyin.com/user' in long_url:
@@ -86,7 +100,20 @@ class Scraper:
                         secuid=long_url.split('www.douyin.com/user/')[-1]
                     elif 'www.iesdouyin.com/share/user' in long_url:
                         # https://www.iesdouyin.com/share/user/MS4wLjABAAAAqzSH2QSxlt5qxYcTiSQ7Fqlho9lDUAaEZgIdgs4xl0E?with_sec_did=1&sec_uid=MS4wLjABAAAAqzSH2QSxlt5qxYcTiSQ7Fqlho9lDUAaEZgIdgs4xl0E&u_code=h6k5ffc9&did=MS4wLjABAAAAypaUWYLhajUUAlLsugFR6fwDjeKmAC0do3pCzmJckSo&iid=MS4wLjABAAAAMbQPjJHaOPuA5-EPckp4s49p8sAFL6YvWvQO1nIzKqaooAW91pQgsN1NAfkoEGhi&ecom_share_track_params=%7B%22is_ec_shopping%22:%221%22%7D&utm_campaign=client_share&app=aweme&utm_medium=ios&tt_from=copy&utm_source=copy
-                        secuid = long_url.split('share/user/')[-1]
+                        # secuid = long_url.split('share/user/')[-1]
+                        o = urlparse(long_url)
+
+                        query = parse_qs(o.query)
+                        # extract the URL without query parameters
+                        # print(query)
+
+                        if 'sec_uid' in query:
+                            secuid=query['sec_uid'][0]
+                        else:
+                            if '?' in long_url:
+                                long_url = long_url.split('?')[0]                            
+                            secuid = long_url.split('share/user/')[-1]
+
                     else:
                         print('this user url is not supported yet',long_url)
                     userprefix = 'https://www.douyin.com/user/'
@@ -128,225 +155,231 @@ class Scraper:
         print("正在请求抖音API链接: " + '\n' + api_url)
         # 将回执以JSON格式处理
         js = json.loads(requests.get(url=api_url, headers=self.headers).text)
-        if len(js['item_list']) == 0:
-            # https://www.douyin.com/video/7068253884954791182 
-            # live_replay
-            # https://v26-web.douyinvod.com/d7cbc2bb8e1c99f754a99a9550435470/62678e38/video/tos/cn/tos-cn-ve-15-alinc2/74cfb5f241284d8385ffa0dabb59de08/?a=6383&br=1717&bt=1717&cd=1%7C0%7C0%7C0&ch=26&cr=0&cs=0&cv=1&dr=0&ds=3&er=&ft=iDIGbiNN6VQ9wUHpmBlW.CDJ-XtmbhdxwiP8_4kag36&l=021650944742163fdbddc0300fff0010a81ecd80000007a10e237&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc=M3doNjw6ZjRxOzMzNGkzM0ApOWhoOWg1OmRlNzhlNmg0NGcxZmNecjQwa19gLS1kLS9zczQtYGA0MTYwYTVjLjM1MTM6Yw%3D%3D&vl=&vr=
-# https://v26-web.douyinvod.com/5f2fec91fdfa45b85e80d2e48edc5e20/62679207/video/tos/cn/tos-cn-ve-15-alinc2/74cfb5f241284d8385ffa0dabb59de08/?a=6383&br=1717&bt=1717&cd=1%7C0%7C0%7C0&ch=26&cr=0&cs=0&cv=1&dr=0&ds=3&er=&ft=5q_lc5mmnPD12Nh46z.-UxH1FuYKc3wv25y3&l=021650945717381fdbddc0100fff0030ac3789c0000007893298c&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc=M3doNjw6ZjRxOzMzNGkzM0ApOWhoOWg1OmRlNzhlNmg0NGcxZmNecjQwa19gLS1kLS9zczQtYGA0MTYwYTVjLjM1MTM6Yw%3D%3D&vl=&vr=
-            print('this video is not supported yet',js['filter_list'])
-            return None
-        else:
-            # 判断是否为图集
-            # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6742624178265984268    
+        try:
+            result=js['item_list']
 
-            if js['item_list'][0]['images'] is not None or js['item_list'][0]['image_infos'] is not None:
-                print("类型 = 图集")
-                # 类型为图集
-                url_type = 'album'
-                # 图集标题
-                album_title = str(js['item_list'][0]['desc'])
-                # 图集作者昵称
-                album_author = str(js['item_list'][0]['author']['nickname'])
-                # 图集作者签名
-                album_author_signature = str(js['item_list'][0]['author']['signature'])
-                # 图集作者UID
-                album_author_uid = str(js['item_list'][0]['author']['uid'])
-                # 图集作者抖音号
-                album_author_id = str(js['item_list'][0]['author']['unique_id'])
-                if album_author_id == "":
-                    # 如果作者未修改过抖音号，应使用此值以避免无法获取其抖音ID
-                    album_author_id = str(js['item_list'][0]['author']['short_id'])
-                # 尝试获取图集BGM信息
-                try:
-                    # 图集BGM链接
-                    album_music = str(js['item_list'][0]['music']['play_url']['url_list'][0])
-                except:
-                    # 报错后代表无背景音乐
-                    # 图集BGM链接
-                    album_music = 'No BGM found'
-                # 图集BGM标题
-                album_music_title=''
-                album_music_author=''
-                album_music_id=''
-                album_music_mid=''
-                # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6827765091836890381    
-                if 'music' in js['item_list'][0]:
-                    album_music_title = str(js['item_list'][0]['music']['title'])
-                    # 图集BGM作者
-                    album_music_author = str(js['item_list'][0]['music']['author'])
-                    # 图集BGM ID
-                    album_music_id = str(js['item_list'][0]['music']['id'])
-                    # 图集BGM MID
-                    album_music_mid = str(js['item_list'][0]['music']['mid'])
-                # 图集ID
-                album_aweme_id = str(js['item_list'][0]['statistics']['aweme_id'])
-                # 评论数量
-                album_comment_count = str(js['item_list'][0]['statistics']['comment_count'])
-                # 获赞数量
-                album_digg_count = str(js['item_list'][0]['statistics']['digg_count'])
-                # 播放次数
-                album_play_count = str(js['item_list'][0]['statistics']['play_count'])
-                # 分享次数
-                album_share_count = str(js['item_list'][0]['statistics']['share_count'])
-                # 上传时间戳
-                album_create_time = str(js['item_list'][0]['create_time'])
-                # 将话题保存在列表中
-                album_hashtags = []
-                for tag in js['item_list'][0]['text_extra']:
-                    album_hashtags.append(tag['hashtag_name'])
-                # 将无水印图片链接保存在列表中
-                images_list = []
-                try:
-                    if 'images' in js['item_list'][0]: 
-                        for data in js['item_list'][0]['images']:
-                            if 'url_list' in data:
-                                # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6794087396402040067    
-                                images_list.append(data['url_list'][0])
-                    if 'image_info' in js['item_list'][0]: 
-
-                        for data in js['item_list'][0]['image_info']:
-                            if 'label_large' in data:
-                            # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6794087396402040067    
-                                images_list.append(data['label_large']['url_list'][0])                    
-                except Exception:
-                    print('image item',Exception)
-                # 结束时间
-                end = time.time()
-                # 解析时间
-                analyze_time = format((end - start), '.4f')
-                # 将信息储存在字典中
-                album_data = {
-                                # 'status': 'success',
-                                # 'analyze_time': (analyze_time + 's'),
-                                # 'url_type': url_type,
-                                # 'platform': 'douyin',
-                                'original_url': original_url,
-                                'api_url': api_url,
-                                'album_aweme_id': album_aweme_id,
-                                'album_title': album_title,
-                                'album_author': album_author,
-                                'album_author_signature': album_author_signature,
-                                'album_author_uid': album_author_uid,
-                                'album_author_id': album_author_id,
-                                'album_music': album_music,
-                                'album_music_title': album_music_title,
-                                'album_music_author': album_music_author,
-                                'album_music_id': album_music_id,
-                                'album_music_mid': album_music_mid,
-                                'album_comment_count': album_comment_count,
-                                'album_digg_count': album_digg_count,
-                                'album_play_count': album_play_count,
-                                'album_share_count': album_share_count,
-                                'album_create_time': album_create_time,
-                                'album_list': images_list,
-                                'album_hashtags': album_hashtags}
-                return album_data,'album'
+            if len(js['item_list']) == 0:
+                # https://www.douyin.com/video/7068253884954791182 
+                # live_replay
+                # https://v26-web.douyinvod.com/d7cbc2bb8e1c99f754a99a9550435470/62678e38/video/tos/cn/tos-cn-ve-15-alinc2/74cfb5f241284d8385ffa0dabb59de08/?a=6383&br=1717&bt=1717&cd=1%7C0%7C0%7C0&ch=26&cr=0&cs=0&cv=1&dr=0&ds=3&er=&ft=iDIGbiNN6VQ9wUHpmBlW.CDJ-XtmbhdxwiP8_4kag36&l=021650944742163fdbddc0300fff0010a81ecd80000007a10e237&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc=M3doNjw6ZjRxOzMzNGkzM0ApOWhoOWg1OmRlNzhlNmg0NGcxZmNecjQwa19gLS1kLS9zczQtYGA0MTYwYTVjLjM1MTM6Yw%3D%3D&vl=&vr=
+    # https://v26-web.douyinvod.com/5f2fec91fdfa45b85e80d2e48edc5e20/62679207/video/tos/cn/tos-cn-ve-15-alinc2/74cfb5f241284d8385ffa0dabb59de08/?a=6383&br=1717&bt=1717&cd=1%7C0%7C0%7C0&ch=26&cr=0&cs=0&cv=1&dr=0&ds=3&er=&ft=5q_lc5mmnPD12Nh46z.-UxH1FuYKc3wv25y3&l=021650945717381fdbddc0100fff0030ac3789c0000007893298c&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc=M3doNjw6ZjRxOzMzNGkzM0ApOWhoOWg1OmRlNzhlNmg0NGcxZmNecjQwa19gLS1kLS9zczQtYGA0MTYwYTVjLjM1MTM6Yw%3D%3D&vl=&vr=
+                print('this video is not supported yet',js['filter_list'])
+                return None,None
             else:
-                print("类型 = 视频")
-                # 类型为视频
-                url_type = 'video'
-                # 视频标题
-                video_title = str(js['item_list'][0]['desc'])
-                # 视频作者昵称
-                video_author = str(js['item_list'][0]['author']['nickname'])
-                # 视频作者抖音号
-                video_author_id = str(js['item_list'][0]['author']['unique_id'])
-                if video_author_id == "":
-                    # 如果作者未修改过抖音号，应使用此值以避免无法获取其抖音ID
-                    video_author_id = str(js['item_list'][0]['author']['short_id'])
-                # 有水印视频链接
-                if 'video' in js['item_list'][0]:
-                    wm_video_url = str(js['item_list'][0]['video']['play_addr']['url_list'][0])
-                # 无水印视频链接 (在回执JSON中将关键字'playwm'替换为'play'即可获得无水印地址)
-                    nwm_video_url = str(js['item_list'][0]['video']['play_addr']['url_list'][0]).replace('playwm',
-                                                                                                        'play')
-                # 去水印后视频链接(2022年1月1日抖音APi获取到的URL会进行跳转，需要在Location中获取直链)
-                try:
-                    r = requests.get(url=nwm_video_url,
-                                 headers=self.headers, allow_redirects=False)
+                # 判断是否为图集
+                # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6742624178265984268    
 
-                    video_url = r.headers['Location']
-                except:
-                    # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6662626768651881731
-                    
-                    video_url = nwm_video_url
+                if js['item_list'][0]['images'] is not None or js['item_list'][0]['image_infos'] is not None:
+                    print("类型 = 图集")
+                    # 类型为图集
+                    url_type = 'album'
+                    # 图集标题
+                    album_title = str(js['item_list'][0]['desc'])
+                    # 图集作者昵称
+                    album_author = str(js['item_list'][0]['author']['nickname'])
+                    # 图集作者签名
+                    album_author_signature = str(js['item_list'][0]['author']['signature'])
+                    # 图集作者UID
+                    album_author_uid = str(js['item_list'][0]['author']['uid'])
+                    # 图集作者抖音号
+                    album_author_id = str(js['item_list'][0]['author']['unique_id'])
+                    if album_author_id == "":
+                        # 如果作者未修改过抖音号，应使用此值以避免无法获取其抖音ID
+                        album_author_id = str(js['item_list'][0]['author']['short_id'])
+                    # 尝试获取图集BGM信息
+                    try:
+                        # 图集BGM链接
+                        album_music = str(js['item_list'][0]['music']['play_url']['url_list'][0])
+                    except:
+                        # 报错后代表无背景音乐
+                        # 图集BGM链接
+                        album_music = 'No BGM found'
+                    # 图集BGM标题
+                    album_music_title=''
+                    album_music_author=''
+                    album_music_id=''
+                    album_music_mid=''
+                    # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6827765091836890381    
+                    if 'music' in js['item_list'][0]:
+                        album_music_title = str(js['item_list'][0]['music']['title'])
+                        # 图集BGM作者
+                        album_music_author = str(js['item_list'][0]['music']['author'])
+                        # 图集BGM ID
+                        album_music_id = str(js['item_list'][0]['music']['id'])
+                        # 图集BGM MID
+                        album_music_mid = str(js['item_list'][0]['music']['mid'])
+                    # 图集ID
+                    album_aweme_id = str(js['item_list'][0]['statistics']['aweme_id'])
+                    # 评论数量
+                    album_comment_count = str(js['item_list'][0]['statistics']['comment_count'])
+                    # 获赞数量
+                    album_digg_count = str(js['item_list'][0]['statistics']['digg_count'])
+                    # 播放次数
+                    album_play_count = str(js['item_list'][0]['statistics']['play_count'])
+                    # 分享次数
+                    album_share_count = str(js['item_list'][0]['statistics']['share_count'])
+                    # 上传时间戳
+                    album_create_time = str(js['item_list'][0]['create_time'])
+                    # 将话题保存在列表中
+                    album_hashtags = []
+                    for tag in js['item_list'][0]['text_extra']:
+                        album_hashtags.append(tag['hashtag_name'])
+                    # 将无水印图片链接保存在列表中
+                    images_list = []
+                    try:
+                        if 'images' in js['item_list'][0]: 
+                            for data in js['item_list'][0]['images']:
+                                if 'url_list' in data:
+                                    # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6794087396402040067    
+                                    images_list.append(data['url_list'][0])
+                        if 'image_info' in js['item_list'][0]: 
 
-                # 视频作者签名
-                video_author_signature = str(js['item_list'][0]['author']['signature'])
-                # 视频作者UID
-                video_author_uid = str(js['item_list'][0]['author']['uid'])
-                # 尝试获取视频背景音乐
-                try:
-                    # 视频BGM链接
-                    video_music = str(js['item_list'][0]['music']['play_url']['url_list'][0])
-                except:
-                    # 出错代表无背景音乐
-                    # 视频BGM链接
-                    video_music = 'No BGM found'
-                # 视频BGM标题
-                video_music_title=''
-                video_music_author=''
-                video_music_id=''
-                video_music_mid=''
-                if 'music' in js['item_list'][0]:
-                    video_music_title = str(js['item_list'][0]['music']['title'])
-                    # 视频BGM作者
-                    video_music_author = str(js['item_list'][0]['music']['author'])
-                    # 视频BGM ID
-                    video_music_id = str(js['item_list'][0]['music']['id'])
-                    # 视频BGM MID
-                    video_music_mid = str(js['item_list'][0]['music']['mid'])
-                # 视频ID
-                video_aweme_id = str(js['item_list'][0]['statistics']['aweme_id'])
-                # 评论数量
-                video_comment_count = str(js['item_list'][0]['statistics']['comment_count'])
-                # 获赞数量
-                video_digg_count = str(js['item_list'][0]['statistics']['digg_count'])
-                # 播放次数
-                video_play_count = str(js['item_list'][0]['statistics']['play_count'])
-                # 分享次数
-                video_share_count = str(js['item_list'][0]['statistics']['share_count'])
-                # 上传时间戳
-                video_create_time = str(js['item_list'][0]['create_time'])
-                # 将话题保存在列表中
-                video_hashtags = []
-                for tag in js['item_list'][0]['text_extra']:
-                    video_hashtags.append(tag['hashtag_name'])
-                # 结束时间
-                end = time.time()
-                # 解析时间
-                analyze_time = format((end - start), '.4f')
-                # 返回包含数据的字典
-                #长链接的格式其实是固定的，唯一变动的就是video_id，上面提取出uri后进行组装即可得到最终链接
-    # play_addr = "https://aweme.snssdk.com/aweme/v1/play/?video_id="+uri[0]+\
-                # "&line=0&ratio=540p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source=PackSourceEnum_PUBLISH"
-                video_data = {
-                    # 'status': 'success',
-                                # 'analyze_time': (analyze_time + 's'),
-                                # 'url_type': url_type,
-                                # 'platform': 'douyin',
-                                'original_url': original_url,
-                                'api_url': api_url,
-                                'video_title': video_title,
-                                'nwm_video_url': video_url,
-                                'wm_video_url': wm_video_url,
-                                'video_aweme_id': video_aweme_id,
-                                'video_author': video_author,
-                                'video_author_signature': video_author_signature,
-                                'video_author_uid': video_author_uid,
-                                'video_author_id': video_author_id,
-                                'video_music': video_music,
-                                'video_music_title': video_music_title,
-                                'video_music_author': video_music_author,
-                                'video_music_id': video_music_id,
-                                'video_music_mid': video_music_mid,
-                                'video_comment_count': video_comment_count,
-                                'video_digg_count': video_digg_count,
-                                'video_play_count': video_play_count,
-                                'video_share_count': video_share_count,
-                                'video_create_time': video_create_time,
-                                'video_hashtags': video_hashtags}
-                return video_data,'video'
+                            for data in js['item_list'][0]['image_info']:
+                                if 'label_large' in data:
+                                # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6794087396402040067    
+                                    images_list.append(data['label_large']['url_list'][0])                    
+                    except Exception:
+                        print('image item',Exception)
+                    # 结束时间
+                    end = time.time()
+                    # 解析时间
+                    analyze_time = format((end - start), '.4f')
+                    # 将信息储存在字典中
+                    album_data = {
+                                    # 'status': 'success',
+                                    # 'analyze_time': (analyze_time + 's'),
+                                    # 'url_type': url_type,
+                                    # 'platform': 'douyin',
+                                    'original_url': original_url,
+                                    'api_url': api_url,
+                                    'album_aweme_id': album_aweme_id,
+                                    'album_title': album_title,
+                                    'album_author': album_author,
+                                    'album_author_signature': album_author_signature,
+                                    'album_author_uid': album_author_uid,
+                                    'album_author_id': album_author_id,
+                                    'album_music': album_music,
+                                    'album_music_title': album_music_title,
+                                    'album_music_author': album_music_author,
+                                    'album_music_id': album_music_id,
+                                    'album_music_mid': album_music_mid,
+                                    'album_comment_count': album_comment_count,
+                                    'album_digg_count': album_digg_count,
+                                    'album_play_count': album_play_count,
+                                    'album_share_count': album_share_count,
+                                    'album_create_time': album_create_time,
+                                    'album_list': images_list,
+                                    'album_hashtags': album_hashtags}
+                    return album_data,'album'
+                else:
+                    print("类型 = 视频")
+                    # 类型为视频
+                    url_type = 'video'
+                    # 视频标题
+                    video_title = str(js['item_list'][0]['desc'])
+                    # 视频作者昵称
+                    video_author = str(js['item_list'][0]['author']['nickname'])
+                    # 视频作者抖音号
+                    video_author_id = str(js['item_list'][0]['author']['unique_id'])
+                    if video_author_id == "":
+                        # 如果作者未修改过抖音号，应使用此值以避免无法获取其抖音ID
+                        video_author_id = str(js['item_list'][0]['author']['short_id'])
+                    # 有水印视频链接
+                    if 'video' in js['item_list'][0]:
+                        wm_video_url = str(js['item_list'][0]['video']['play_addr']['url_list'][0])
+                    # 无水印视频链接 (在回执JSON中将关键字'playwm'替换为'play'即可获得无水印地址)
+                        nwm_video_url = str(js['item_list'][0]['video']['play_addr']['url_list'][0]).replace('playwm',
+                                                                                                            'play')
+                    # 去水印后视频链接(2022年1月1日抖音APi获取到的URL会进行跳转，需要在Location中获取直链)
+                    try:
+                        r = requests.get(url=nwm_video_url,
+                                    headers=self.headers, allow_redirects=False)
+
+                        video_url = r.headers['Location']
+                    except:
+                        # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6662626768651881731
+                        
+                        video_url = nwm_video_url
+
+                    # 视频作者签名
+                    video_author_signature = str(js['item_list'][0]['author']['signature'])
+                    # 视频作者UID
+                    video_author_uid = str(js['item_list'][0]['author']['uid'])
+                    # 尝试获取视频背景音乐
+                    try:
+                        # 视频BGM链接
+                        video_music = str(js['item_list'][0]['music']['play_url']['url_list'][0])
+                    except:
+                        # 出错代表无背景音乐
+                        # 视频BGM链接
+                        video_music = 'No BGM found'
+                    # 视频BGM标题
+                    video_music_title=''
+                    video_music_author=''
+                    video_music_id=''
+                    video_music_mid=''
+                    if 'music' in js['item_list'][0]:
+                        video_music_title = str(js['item_list'][0]['music']['title'])
+                        # 视频BGM作者
+                        video_music_author = str(js['item_list'][0]['music']['author'])
+                        # 视频BGM ID
+                        video_music_id = str(js['item_list'][0]['music']['id'])
+                        # 视频BGM MID
+                        video_music_mid = str(js['item_list'][0]['music']['mid'])
+                    # 视频ID
+                    video_aweme_id = str(js['item_list'][0]['statistics']['aweme_id'])
+                    # 评论数量
+                    video_comment_count = str(js['item_list'][0]['statistics']['comment_count'])
+                    # 获赞数量
+                    video_digg_count = str(js['item_list'][0]['statistics']['digg_count'])
+                    # 播放次数
+                    video_play_count = str(js['item_list'][0]['statistics']['play_count'])
+                    # 分享次数
+                    video_share_count = str(js['item_list'][0]['statistics']['share_count'])
+                    # 上传时间戳
+                    video_create_time = str(js['item_list'][0]['create_time'])
+                    # 将话题保存在列表中
+                    video_hashtags = []
+                    for tag in js['item_list'][0]['text_extra']:
+                        video_hashtags.append(tag['hashtag_name'])
+                    # 结束时间
+                    end = time.time()
+                    # 解析时间
+                    analyze_time = format((end - start), '.4f')
+                    # 返回包含数据的字典
+                    #长链接的格式其实是固定的，唯一变动的就是video_id，上面提取出uri后进行组装即可得到最终链接
+        # play_addr = "https://aweme.snssdk.com/aweme/v1/play/?video_id="+uri[0]+\
+                    # "&line=0&ratio=540p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source=PackSourceEnum_PUBLISH"
+                    video_data = {
+                        # 'status': 'success',
+                                    # 'analyze_time': (analyze_time + 's'),
+                                    # 'url_type': url_type,
+                                    # 'platform': 'douyin',
+                                    'original_url': original_url,
+                                    'api_url': api_url,
+                                    'video_title': video_title,
+                                    'nwm_video_url': video_url,
+                                    'wm_video_url': wm_video_url,
+                                    'video_aweme_id': video_aweme_id,
+                                    'video_author': video_author,
+                                    'video_author_signature': video_author_signature,
+                                    'video_author_uid': video_author_uid,
+                                    'video_author_id': video_author_id,
+                                    'video_music': video_music,
+                                    'video_music_title': video_music_title,
+                                    'video_music_author': video_music_author,
+                                    'video_music_id': video_music_id,
+                                    'video_music_mid': video_music_mid,
+                                    'video_comment_count': video_comment_count,
+                                    'video_digg_count': video_digg_count,
+                                    'video_play_count': video_play_count,
+                                    'video_share_count': video_share_count,
+                                    'video_create_time': video_create_time,
+                                    'video_hashtags': video_hashtags}
+                    return video_data,'video'
+        except Exception:
+            print('parse video info',js)
+            return None,None
 
     
     def tiktok_url2videoid(self, original_url):
@@ -488,6 +521,12 @@ class Scraper:
                         }
         # 返回包含数据的字典
         return video_date
+    def validate_uidhome(self,original_url):
+        if validate_uidhome(original_url):
+            return True
+        else:
+            return False
+     
     def uploadvideo2cloud():
         persistenturl=''
         return persistenturl
@@ -496,10 +535,12 @@ class Scraper:
     def douyin_getsecuidfromKeyword(username):
         sec_uid=''
         return sec_uid
-    def douyin_getvideoidsfromSecuid(sec_uid):
+    def douyin_getvideoidsfromSecuid(self,sec_uid):
         videoids=[]
-        videoids,count=get_user_video_list_douyin_pl(url)
-        return videoids
+        count=0
+        if validate_uidhome('https://www.douyin.com/user/'+sec_uid):
+            videoids,count=get_user_video_list_douyin_pl('https://www.douyin.com/user/'+sec_uid)
+        return videoids,count
     def douyin_getvideoidsfromTag(tagname):
         videoids=[]
         return videoids
@@ -535,17 +576,25 @@ class Scraper:
 if __name__ == '__main__':
     # 测试类
     scraper = Scraper()
-    while True:
-        url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                         input("Enter your Douyin/TikTok url here to test: "))[0]
-        try:
-            if 'douyin.com' in url:
-                douyin_date = scraper.douyin(url)
-                print(douyin_date)
-            else:
-                tiktok_date = scraper.tiktok(url)
-                print(tiktok_date)
-        except Exception as e:
-            print("Error: " + str(e))
+    url='https://www.douyin.com/user/MS4wLjABAAAA0nKxd9w8CBhKXJ9qYnanSI_H6BG7z0mFl8Df9xF0TqM'
+    url ='https://www.douyin.com/user/MS4wLjABAAAAa9knJerjMpCz4M9jIO-0MxvjdTh2cGsJvrD7ihxo_Xo'
+    url='https://www.douyin.com/user/MS4wLjABAAAAdUt6uix8lq48xt5t_lWPw3x1zA4G3-VwIejx-IPsfrE'
+    url='https://www.douyin.com/user/MS4wLjABAAAAhFW24XJz_MZM58DWH_hVPE3Qwya7AzB7DKKd0cg0cqE'
+    # url='https://www.douyin.com/user/MS4wLjABAAAAC5c2X1HPU6rMFG66UoXrmlI1KZzsPrsAwW6GkPYp8yA'
+    # url='https://www.douyin.com/user/MS4wLjABAAAAgOPcZeD1nzhuHZVRtP0JBXrf--iHyGLXuca2mN5DwzA'
+    # t=scraper.validate_uidhome(url)
+    # print(t)
+    # while True:
+    #     url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+    #                      input("Enter your Douyin/TikTok url here to test: "))[0]
+    #     try:
+    #         if 'douyin.com' in url:
+    #             douyin_date = scraper.douyin(url)
+    #             print(douyin_date)
+    #         else:
+    #             tiktok_date = scraper.tiktok(url)
+    #             print(tiktok_date)
+    #     except Exception as e:
+    #         print("Error: " + str(e))
 
 

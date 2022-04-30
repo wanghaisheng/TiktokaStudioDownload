@@ -4,6 +4,32 @@ badcase
 
 https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6997703748135030020/
 
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7078836140224154884
+
+
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6606478819727510791
+
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6999648599046950175
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7006884460117478686
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6763406968490069260
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6509074624590908675
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6509074624590908675
+
+
+https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=6891437708175035655
+
+
+
+
+#deleted user
+
+https://www.douyin.com/user/MS4wLjABAAAA0nKxd9w8CBhKXJ9qYnanSI_H6BG7z0mFl8Df9xF0TqM
+https://www.douyin.com/user/MS4wLjABAAAAa9knJerjMpCz4M9jIO-0MxvjdTh2cGsJvrD7ihxo_Xo
+https://www.douyin.com/user/MS4wLjABAAAAdUt6uix8lq48xt5t_lWPw3x1zA4G3-VwIejx-IPsfrE
+https://www.douyin.com/user/MS4wLjABAAAAhFW24XJz_MZM58DWH_hVPE3Qwya7AzB7DKKd0cg0cqE
+
+
+
 
 
 https://v.douyin.com/JWTACSX/,

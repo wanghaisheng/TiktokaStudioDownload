@@ -62,12 +62,13 @@ feaure_code = """
 --------------------------------
 *    # Save TikTok/Douyin Clips Individually  and in bulk
 
-    Save one TikTok video at a time. Enter the link to a TikTok video or bunch of video links and download it to your computer.especially for Backup Your TikTok Account
+    Save one TikTok video at a time. Enter the link to a TikTok video 
+    Save bunch of video links and download it to your computer.especially for Backup Your TikTok Account
 
-*    # Save TikTok/Douyin User Clips Individually and in bulk
-    Save one or more user video at a time. Enter the link to a Tiktok user or bunch of video links and download it to your computer in batch.
+*    # Save TikTok/Douyin videos belong to User profile.
+    Enter the link to a Tiktok user or Douyin user and we detect all videos and auto download all videos to your computer in batch.
 
-*    # Search User and Download user video (Coming soon)
+*    # Search User and Download user video
     type user name or user id,if there is a user match the term,we can automatically download all of videos belong to this user
 
 *    # Search keywords and Download keywords related video (Coming soon)
