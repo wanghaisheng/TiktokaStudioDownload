@@ -36,7 +36,8 @@ webdriver_manager
 fastapi-cloudauth
 python-firebase
 firebase-admin
-supabase
+https://github.com/supabase-community/supabase-py/releases/download/v0.5.5/supabase-0.5.5-py3-none-any.whl
+# supabase
 playwright==1.18.1
 python-dotenv
 tenacity==8.0.1
