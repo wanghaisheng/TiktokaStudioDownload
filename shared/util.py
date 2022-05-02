@@ -8,16 +8,6 @@ import string
 import random
 import sys
 from webdriver_manager.chrome import ChromeDriverManager
-from supabase import create_client, Client
-from dotenv import load_dotenv
-import logging
-# from tenacity import *
-# 加载文件
-load_dotenv(".env")
-supabase_url = os.environ.get('supabase_url')
-supabase_apikey = os.environ.get('supabase_apikey')
-supabase_db: Client = create_client(
-    supabase_url=supabase_url, supabase_key=supabase_apikey)
 
 HEADERS = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -110,16 +100,6 @@ def set_userip_call_count(userip_call_count):
     with open('ip-api-call.pickle', 'wb') as handle:
         pickle.dump(userip_call_count, handle, protocol=pickle.HIGHEST_PROTOCOL)
     return True
-def supabase():
-# 加载文件
-    load_dotenv(".env")
-    supabase_url = os.environ.get('supabase_url')
-    supabase_apikey = os.environ.get('supabase_apikey')
-    supabase_db: Client = create_client(
-        supabase_url=supabase_url, supabase_key=supabase_apikey)    
-    return supabase_db
-def supabase_coldstart(supabase_db):
-    data = supabase_db.table("tiktoka_douyin_users").insert({}).execute()
 
 def get_userip_call_count():
     print('loading ip  api call db')
@@ -223,83 +203,3 @@ def get_undetected_webdriver(silence:bool=True):
     except OSError:
         return uc.Chrome(use_subprocess=True,headless=silence, options=options)
     
-
-def newbase(apikey,baseid):
-    if apikey=='' or apikey is None:
-        apikey=os.environ['AIRTABLE_API_KEY']
-    if baseid=='' or baseid is None:
-
-        baseid=os.environ['AIRTABLE_BASE_KEY']    
-    db=Base(apikey, baseid)    
-    return db
-def newtable(apikey,baseid,tableid):
-    if apikey=='' or apikey is None:
-        apikey=os.environ['AIRTABLE_API_KEY']
-    if baseid=='' or baseid is None:
-
-        baseid=os.environ['AIRTABLE_BASE_KEY']
-    if tableid=='' or tableid is None:
-        tableid=os.environ['AIRTABLE_TABLE_KEY']
-    # api = Api(apikey)
-    table = Table(apikey, baseid, tableid)
-
-    return table
-def insert2airtable(table,rows):
-    # print(rows,'====',type(rows[0]))
-    if len(rows)==1:
-
-        table.create(rows[0])
-    else:
-        table.create(rows)
-
-
-def getrowid(table,row):
-
-    formula = match(row)
-    try:
-        id =table.first(formula=formula)['id']
-    except:
-        id = None
-    return id
-
-def updaterow(table,rows):
-    if len(rows)==1:
-        id =getrowid(table,rows[0])
-        if id is None:
-            insert2airtable(table,rows)            
-        else:
-            table.update(id,rows[0])
-    else:
-        for row in rows:
-            id =getrowid(table,[row])
-            if id is None:
-                insert2airtable(table,[row])            
-            else:
-                table.update(id,[row])      
-
-
-# @retry(stop=stop_after_attempt(10))
-def supabaseuserquery(tablename,sec_uid):
-    if sec_uid=='' or sec_uid is None:
-        data = supabase_db.table(tablename).select().execute()    
-    
-    else:
-        try:
-            data = supabase_db.table(tablename).select("*").eq("sec_uid", sec_uid).execute()    
-            
-        except:
-            data.data=''
-            raise Exception
-    return data.data
-# @retry(stop=stop_after_attempt(10))
-def supabaseuseradd(tablename,users):
-    try:
-        data = supabase_db.table(tablename).insert(users).execute()    
-    except:
-        raise Exception
-# @retry(stop=stop_after_attempt(10))
-def supabaseuserupdate(tablename,user,uid):
-    try:
-        data = supabase_db.table(tablename).update(user).eq("uid", uid).execute()    
-    except:
-        raise Exception
