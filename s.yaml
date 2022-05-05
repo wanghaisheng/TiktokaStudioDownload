@@ -41,7 +41,7 @@ services:
 #        - plugin: myplugin                               # 与运行的插件 （可以通过s cli registry search --type Plugin 获取组件列表）
 #          args:                                          # 插件的参数信息
 #            testKey: testValue
-     post-deploy: # 在deploy之后运行
+      post-deploy: # 在deploy之后运行
         - run: playwright install 
 #        - component: fc versions publish # 要运行的命令行
     props: # 组件的属性值
