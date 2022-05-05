@@ -37,5 +37,5 @@ fastapi-cloudauth
 python-firebase
 firebase-admin
 https://github.com/supabase-community/supabase-py/releases/download/v0.5.5/supabase-0.5.5-py3-none-any.whl
-playwright==1.18.1
+playwright==v1.21.0
 python-dotenv
