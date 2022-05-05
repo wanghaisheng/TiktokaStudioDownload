@@ -36,6 +36,7 @@ webdriver_manager
 fastapi-cloudauth
 python-firebase
 firebase-admin
+https://github.com/supabase-community/postgrest-py/releases/download/v0.10.2/postgrest_py-0.10.2-py3-none-any.whl
 https://github.com/supabase-community/supabase-py/releases/download/v0.5.5/supabase-0.5.5-py3-none-any.whl
 https://files.pythonhosted.org/packages/c2/54/9e7563ac4ff179274bb19c204785cb4daa134bafe1cb41031878928827a5/playwright-1.21.0-py3-none-manylinux1_x86_64.whl
 python-dotenv
