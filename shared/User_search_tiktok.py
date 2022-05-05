@@ -16,7 +16,7 @@ from typing import Tuple, Optional, Union
 from collections import Counter
 
 from playwright.sync_api import sync_playwright
-from util import id_generator
+from .util import id_generator
 import sys
 from datetime import datetime
 
