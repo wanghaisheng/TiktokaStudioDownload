@@ -20,7 +20,7 @@ pyscreenshot
 lazyEdge
 requests
 selenium_stealth
-selenium
+selenium>=4.0.0
 pillow
 pandas
 plane
