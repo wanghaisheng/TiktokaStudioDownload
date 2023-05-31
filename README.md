@@ -11,12 +11,20 @@
  
       
 
-How this works
+## How this works
 
  tiktoka studio Downloader  Lite runs the full  Tiktoka Studio Downloader server-side  Python web application directly in your browser, using the Pyodide build of Python compiled to WebAssembly.
 
 When you launch the demo, your browser will download and start executing a full Python interpreter, install the  Tiktoka Studio Downloader package (and its dependencies), download one or more SQLite database files and start the application running in a browser window (actually a Web Worker attached to that window).
 
+
+
+## inspired 
+
+https://github.com/whitphx/stlite
+
+
+https://github.com/simonw/datasette-lite
 
 
 
