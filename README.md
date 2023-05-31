@@ -4,6 +4,22 @@
 # 欢迎使用 `TikToka™ tiktok/douyin videos Download tookit` (抖音在线解析)
 
 
+
+
+ Tiktoka Studio Downloader Lite  running in your browser using WebAssembly and Pyodide 
+ 
+ 
+      
+
+How this works
+
+ tiktoka studio Downloader  Lite runs the full  Tiktoka Studio Downloader server-side  Python web application directly in your browser, using the Pyodide build of Python compiled to WebAssembly.
+
+When you launch the demo, your browser will download and start executing a full Python interpreter, install the  Tiktoka Studio Downloader package (and its dependencies), download one or more SQLite database files and start the application running in a browser window (actually a Web Worker attached to that window).
+
+
+
+
 tiktoka视频下载工具，批量Douyin/TikTok解析下载无水印视频/图集，并将结果显示在网页上。同时支持API调用，可配合iOS快捷指令APP实现应用内下载。基于抖音官方API/非官方api/selenium等技术，实现在线、离线下载
 
 
